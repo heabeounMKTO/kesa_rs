@@ -5,7 +5,7 @@ use serde_yaml::{self};
 use std::collections::HashMap;
 use std::{env::consts::OS, ffi::OsStr, fs, io, path, path::PathBuf};
 
-use crate::convert::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
+use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelDetails {
