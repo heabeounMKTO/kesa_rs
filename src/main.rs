@@ -4,7 +4,8 @@ mod yolo;
 use clap::Parser;
 use convert_label::convert::{convert, ConvertSettings, ConvertTarget};
 use std::{env::args, fs::File};
-use anyhow::bail;
+use anyhow::Result;
+use anyhow::Error;
 use crate::kesa_utils::file_utils::get_model_classes_from_yaml;
 
 #[derive(Parser, Debug)]
@@ -23,11 +24,11 @@ fn main() {
     println!("Hello, world!");
     let penis = CliArguments::parse();
     let label_classes: Vec<String> = get_model_classes_from_yaml(&penis.classes_file).unwrap();
-    let target: anyhow::Result<ConvertTarget> = match penis.target.to_lowercase().as_str() {
+    let target: anyhow::Result<ConvertTarget, Error> = match penis.target.to_lowercase().as_str() {
        "yolo" => Ok(ConvertTarget::Yolo),
        "coco" => Ok(ConvertTarget::Coco),
        "pascal" => Ok(ConvertTarget::Pascal),
-       _ => Err("format not recognized!")
+       _ => anyhow::Error("format not recognized!")
     };
     
     let settings: ConvertSettings =
