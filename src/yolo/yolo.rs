@@ -1,11 +1,10 @@
-use serde_derive::{Serialize, Deserialize};
-use tch::{self, vision::image};
-use tch::Tensor;
-use tch::kind;
-use serde_json::{Value, json};
-use tch::IValue;
+use serde_derive::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::io;
-
+use tch::kind;
+use tch::IValue;
+use tch::Tensor;
+use tch::{self, vision::image};
 
 #[derive(Debug, Clone, Copy)]
 pub struct BBox {
@@ -24,36 +23,31 @@ pub struct YOLO {
     w: i64,
 }
 
-
-impl BBox{
-    pub fn conf(&self) -> f64{
+impl BBox {
+    pub fn conf(&self) -> f64 {
         return self.conf;
     }
-    pub fn cls(&self) -> i64{
+    pub fn cls(&self) -> i64 {
         return self.cls as i64;
     }
 }
 
-
-
-#[derive(Deserialize,Serialize, Clone, Debug)]
-pub struct Detections{
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct Detections {
     pub confidence: f64,
     pub cardClass: String,
-    pub card: usize
+    pub card: usize,
 }
 
-impl Detections{
-    pub fn new(confidence: f64, cardClass: String, card: usize) -> Detections{
-       return Detections{
+impl Detections {
+    pub fn new(confidence: f64, cardClass: String, card: usize) -> Detections {
+        return Detections {
             confidence: confidence,
             cardClass: cardClass,
-            card: card
-       } 
+            card: card,
+        };
     }
 }
-
-
 
 impl YOLO {
     pub fn new(weights: &str, h: i64, w: i64, device: tch::Device) -> YOLO {
@@ -93,20 +87,20 @@ impl YOLO {
             .collect();
         results
     }
-    
 
-    
-
-    pub fn predict_ivalue(&self, image: &tch::Tensor, conf_thresh: f64, iou_thresh: f64) -> Vec<BBox> {
+    pub fn predict_ivalue(
+        &self,
+        image: &tch::Tensor,
+        conf_thresh: f64,
+        iou_thresh: f64,
+    ) -> Vec<BBox> {
         let img = tch::vision::image::resize(&image, self.w, self.h).unwrap();
         let img = img
-                  .unsqueeze(0)
-                  .to_kind(tch::Kind::Float)
-                  .to_device(self.device)
-                  .g_div_scalar(255.0);
-        let pred =  self.model 
-                            .forward_is(&[IValue::from(img)])
-                            .unwrap();
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Float)
+            .to_device(self.device)
+            .g_div_scalar(255.0);
+        let pred = self.model.forward_is(&[IValue::from(img)]).unwrap();
 
         let pred_T = tch::Tensor::try_from(pred).unwrap();
         return self.non_max_suppression(&pred_T.get(0), conf_thresh, iou_thresh);
@@ -129,7 +123,7 @@ impl YOLO {
         let result = self.non_max_suppression(&pred.get(0), conf_thresh, iou_thresh);
         result
     }
-    
+
     pub fn warmup(&self) {
         let img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         let img = img
@@ -158,12 +152,7 @@ impl YOLO {
         i_area / (b1_area + b2_area - i_area)
     }
 
-    fn non_max_suppression(
-        &self,
-        pred: &Tensor,
-        conf_thresh: f64,
-        iou_thresh: f64,
-    ) -> Vec<BBox> {
+    fn non_max_suppression(&self, pred: &Tensor, conf_thresh: f64, iou_thresh: f64) -> Vec<BBox> {
         let (npreds, pred_size) = pred.size2().unwrap();
         let nclasses = (pred_size - 5) as usize;
         let mut bboxes: Vec<Vec<BBox>> = (0..nclasses).map(|_| vec![]).collect();
@@ -181,7 +170,6 @@ impl YOLO {
                     }
                 }
                 if pred[5 + class_index] > 0. {
-                    
                     let bbox = BBox {
                         xmin: pred[0] - pred[2] / 2.,
                         ymin: pred[1] - pred[3] / 2.,
@@ -191,9 +179,7 @@ impl YOLO {
                         cls: class_index,
                     };
                     bboxes[class_index].push(bbox);
-
                 }
-                
             }
         }
 
