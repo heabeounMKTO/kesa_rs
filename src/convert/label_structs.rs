@@ -9,20 +9,26 @@ pub struct GenericAnnotation{
     pub label: String,
     pub image_width: i32,
     pub image_height: i32,
-    pub image_path: i32,
-    pub x1y1: [f32;2],
-    pub x2y2: [f32;2]
+    pub image_path: String,
+    pub x1y1: GenericLabelPoints,
+    pub x2y2: GenericLabelPoints
 }
 
 impl GenericAnnotation{
-    pub fn new(label: &str, image_width: i32, image_height: i32, image_path: String, x1y1: GenericLabelPoints, x2y2: GenericLabelPoints) -> Annotation{
-        return Annotation{
+    pub fn new(label: &str, 
+               image_width: i32, 
+               image_height: i32, 
+               image_path: String, 
+               x1y1: GenericLabelPoints, 
+               x2y2: GenericLabelPoints) 
+    -> GenericAnnotation{
+        return GenericAnnotation{
            label: String::from(label),
            image_width: image_width,
            image_height: image_height,
            image_path: image_path,
-           x1y1: GenericLabelPoints,
-           x2y2: GenericLabelPoints
+           x1y1: x1y1,
+           x2y2: x2y2 
          }
     }
 
@@ -33,13 +39,14 @@ impl GenericAnnotation{
     pub fn x2y2(&self) -> GenericLabelPoints {self.x2y2} 
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct GenericLabelPoints{
     pub x: f32,
     pub y: f32
 }
 
 impl GenericLabelPoints {
-    pub fn new(x: f32, y:f32){
+    pub fn new(x: f32, y:f32) -> GenericLabelPoints{
         GenericLabelPoints{
             x: x,
             y: y
@@ -59,8 +66,8 @@ pub struct YoloLabel{
 }
 
 impl YoloLabel{
-    pub fn new(label_index: i32,x: f32, y: f32, w: f32, h: f32) -> xywh{
-        return xywh {
+    pub fn new(label_index: i32,x: f32, y: f32, w: f32, h: f32) -> YoloLabel{
+        return YoloLabel {
             label_index: label_index,
             x: x,
             y: y,
@@ -69,5 +76,31 @@ impl YoloLabel{
          }
 
     }
+
 }
 
+#[derive(Serialize, Deserialize,Debug, Clone)]
+pub struct LabelMeShapes {
+    pub label: String,
+    pub points: Vec<GenericLabelPoints>,
+    pub shape_type: String,
+    pub flags: HashMap<String, String>
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LabelMeLabel {
+    pub version: String,
+    pub flags: HashMap<String,String>,
+    pub shapes: Vec<LabelMeShapes>,
+    pub imagePath: String, //must match actual LabelMe json, so keysmust match
+    pub imageData: String,
+    pub imageHeight:i32,
+    pub imageWidth: i32,
+}
+
+impl LabelMeLabel {
+    pub fn version(&self) -> String {String::from(&self.version)}
+    pub fn image_width(&self) -> i32 {self.imageWidth}
+    pub fn image_height(&self) -> i32 {self.imageHeight}
+}
