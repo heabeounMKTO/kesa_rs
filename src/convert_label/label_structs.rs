@@ -1,9 +1,9 @@
-use conv::ValueFrom;
+
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{json, Result, Value};
-use sorted_list::SortedList;
+
+
 use std::collections::HashMap;
-use std::{ffi::OsStr, fs, io, path, path::PathBuf};
+
 
 
 /// stores generic values that most annotated images have
@@ -73,6 +73,10 @@ impl GenericAnnotation {
             h: h,
         };
     }
+
+    pub fn convert2labelme(&self, class_hash: HashMap<String, i32>) -> LabelMeLabel {
+        todo!();
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -138,4 +142,6 @@ impl LabelMeLabel {
     pub fn image_height(&self) -> i32 {
         self.imageHeight
     }
+
+
 }

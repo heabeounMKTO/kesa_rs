@@ -1,15 +1,15 @@
 use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
 use anyhow;
-use indicatif::{ProgressBar, ProgressState, ProgressStyle};
+
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{json, Result, Value};
+use serde_json::{Result};
 use serde_yaml::{self};
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::thread;
-use std::time::Duration;
-use std::{cmp::min, fmt::Write};
-use std::{env::consts::OS, ffi::OsStr, fs, io, path, path::PathBuf};
+
+
+
+use std::{fmt::Write};
+use std::{ffi::OsStr, fs, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelDetails {
@@ -56,7 +56,7 @@ pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnno
         .expect(&format!("Couldn't read content in file: {:?}", &contents));
 
     for shape in readed_json.shapes.to_owned() {
-        let (mut label, mut image_width, mut image_height, mut image_path, mut x1y1, mut x2y2): (
+        let (label, image_width, image_height, image_path, x1y1, x2y2): (
             String,
             i32,
             i32,
