@@ -1,3 +1,4 @@
+use conv::ValueFrom;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{json, Result, Value};
 use sorted_list::SortedList;
@@ -47,6 +48,28 @@ impl GenericAnnotation {
     }
     pub fn x2y2(&self) -> GenericLabelPoints {
         self.x2y2
+    }
+
+    pub fn convert2yolo(&self, class_hash: HashMap<String, i32>) -> YoloLabel {
+        let x1 = self.x1y1.x;
+        let y1 = self.x1y1.y;
+        let x2 = self.x2y2.x;
+        let y2 = self.x2y2.y;
+
+        let x = ((x1 + x2) / 2.0) / self.image_width as f32;
+        let y = ((y1 + y2) / 2.0) / self.image_height as f32;
+        let w = (x2 - x1) / self.image_width as f32;
+        let h = (y2 - y1) / self.image_height as f32;
+        
+        let class_idx = class_hash.get(&self.label).unwrap();
+       
+        return YoloLabel {
+            label_index: class_idx.to_owned(),
+            x: x,
+            y: y,
+            w: w,
+            h: h,
+        };
     }
 }
 

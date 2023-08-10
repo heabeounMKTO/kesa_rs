@@ -1,21 +1,40 @@
+use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
 use anyhow;
+use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{json, Result, Value};
 use serde_yaml::{self};
 use std::collections::HashMap;
+use std::hash::Hash;
+use std::thread;
+use std::time::Duration;
+use std::{cmp::min, fmt::Write};
 use std::{env::consts::OS, ffi::OsStr, fs, io, path, path::PathBuf};
-
-use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelDetails {
     pub names: Vec<String>,
+    pub input_size: Vec<String>, // TODO: add input_size to python export scripts
 }
 
-pub fn get_model_classes_from_yaml(input: &str) -> anyhow::Result<Vec<String>> {
+pub fn class_vec2hash(input_vec: Vec<String>) -> Result<HashMap<String, i32>> {
+    let mut result: HashMap<String, i32> = HashMap::new(); 
+    for (idx, label_name) in input_vec.iter().enumerate(){
+        result.insert(String::from(label_name), idx as i32);
+    }
+    Ok(result)
+}
+
+pub fn get_model_classes_from_yaml(input: &str) -> anyhow::Result<HashMap<String,i32>> {
     let f = std::fs::File::open(input)?;
     let model_deets: ModelDetails = serde_yaml::from_reader(f)?;
-    Ok(model_deets.names)
+    Ok(class_vec2hash(model_deets.names).unwrap())
+}
+
+pub fn get_model_config_from_yaml(input: &str) -> anyhow::Result<ModelDetails> {
+    let f = std::fs::File::open(input)?;
+    let model_config: ModelDetails = serde_yaml::from_reader(f)?;
+    Ok(model_config)
 }
 
 pub fn get_all_json(input: &str) -> anyhow::Result<Vec<PathBuf>> {
@@ -55,7 +74,7 @@ pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnno
         x2y2 = GenericLabelPoints::new(shape.points[1].x.to_owned(), shape.points[1].y.to_owned());
         let anno =
             GenericAnnotation::new(&label, image_width, image_height, image_path, x1y1, x2y2);
+        result.push(anno.to_owned());
     }
-
     Ok(result)
 }

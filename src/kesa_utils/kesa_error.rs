@@ -1,3 +1,5 @@
+use owo_colors::OwoColorize;
+
 #[derive(Debug, Clone)]
 pub enum KesaErrorType {
     UnknownTypeError,
@@ -12,7 +14,8 @@ pub struct KesaError {
 
 impl KesaError {
     pub fn KesaUnknownTypeError(msg: String) -> KesaError {
-        println!("KesaUnknownTypeError: {}", &msg);
+        let error_type = String::from("[KesaUnknownTypeError]: ");
+        println!("{} {}", error_type.white().on_red(), &msg.white().on_red());
         KesaError {
             message: msg,
             errortype: KesaErrorType::UnknownTypeError,
@@ -20,7 +23,7 @@ impl KesaError {
     }
 
     pub fn FileNotFoundError(msg: String) -> KesaError {
-        println!("KesaFileNotFoundError: {}", &msg);
+        println!("[KesaFileNotFoundError]: {}", &msg);
         KesaError {
             message: msg,
             errortype: KesaErrorType::FileNotFoundError,

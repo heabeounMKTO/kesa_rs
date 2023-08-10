@@ -1,4 +1,4 @@
-const kesa_splash: &str = r#"
+const KESA_SPLASH: &str = r#"
 █╗  ██╗███████╗███████╗ █████╗ 
 ██║ ██╔╝██╔════╝██╔════╝██╔══██╗
 █████╔╝ █████╗  ███████╗███████║
@@ -9,6 +9,6 @@ LABEL,      AUGMENT,     CONVERT
 "#;
 
 pub fn print_splash() {
-    println!("⚡HEABEOUN's"); 
-    println!("{}", kesa_splash);
+    println!("⚡HEABEOUN's");
+    println!("{}", KESA_SPLASH);
 }
