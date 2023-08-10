@@ -10,6 +10,7 @@ anyhow = "1.0.72"
 clap = { version = "4.3.21", features = ["derive"] }
 conv = "0.3.3"
 indicatif = "0.17.6"
+opencv = "0.84.4"
 owo-colors = "3.5.0"
 serde = { version = "1.0.181", features = ["derive"] }
 serde_derive = "1.0.181"

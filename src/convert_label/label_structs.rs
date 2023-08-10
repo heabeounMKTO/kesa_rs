@@ -5,6 +5,8 @@ use sorted_list::SortedList;
 use std::collections::HashMap;
 use std::{ffi::OsStr, fs, io, path, path::PathBuf};
 
+
+/// stores generic values that most annotated images have
 #[derive(Debug, Clone)]
 pub struct GenericAnnotation {
     pub label: String,
