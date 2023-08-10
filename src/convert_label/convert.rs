@@ -1,10 +1,27 @@
 use crate::kesa_utils::file_utils::{get_all_json, get_model_classes_from_yaml};
+use crate::kesa_utils::kesa_error::KesaError;
+use std::str::FromStr;
 
 #[derive(Clone, Debug, Copy)]
 pub enum ConvertTarget {
     Yolo,
     Pascal,
     Coco,
+}
+
+impl FromStr for ConvertTarget {
+    type Err = KesaError;
+    fn from_str(input_type: &str) -> Result<Self, Self::Err> {
+        match input_type.to_lowercase().as_str() {
+            "yolo" => Ok(ConvertTarget::Yolo),
+            "coco" => Ok(ConvertTarget::Coco),
+            "pascal" => Ok(ConvertTarget::Pascal),
+            _ => Err(KesaError::KesaUnknownTypeError(String::from(format!(
+                "kesa does not suppourt '{}' for conversion",
+                input_type
+            )))),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
