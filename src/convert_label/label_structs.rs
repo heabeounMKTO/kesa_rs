@@ -60,9 +60,9 @@ impl GenericAnnotation {
         let y = ((y1 + y2) / 2.0) / self.image_height as f32;
         let w = (x2 - x1) / self.image_width as f32;
         let h = (y2 - y1) / self.image_height as f32;
-        
+
         let class_idx = class_hash.get(&self.label).unwrap();
-       
+
         return YoloLabel {
             label_index: class_idx.to_owned(),
             x: x,

@@ -12,9 +12,9 @@ use kesa_utils::kesa_task::KesaTask;
 use kesa_utils::kesa_task::KesaTaskType;
 use kesa_utils::kesa_task::{KesaAugment, KesaConvert, KesaLabel};
 use owo_colors::OwoColorize;
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::{env::args, fs::File};
-use std::collections::HashMap;
 
 #[derive(Parser, Debug)]
 struct CliArguments {
@@ -34,7 +34,8 @@ struct CliArguments {
 fn main() {
     kesa_splash::print_splash();
     let penis = CliArguments::parse();
-    let label_classes: HashMap<String,i32> = get_model_classes_from_yaml(&penis.classes_file).unwrap();
+    let label_classes: HashMap<String, i32> =
+        get_model_classes_from_yaml(&penis.classes_file).unwrap();
     let task: KesaTaskType = KesaTaskType::from_str(&penis.task).unwrap();
     let target: ConvertTarget = ConvertTarget::from_str(&penis.target).unwrap();
     println!(

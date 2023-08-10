@@ -18,14 +18,14 @@ pub struct ModelDetails {
 }
 
 pub fn class_vec2hash(input_vec: Vec<String>) -> Result<HashMap<String, i32>> {
-    let mut result: HashMap<String, i32> = HashMap::new(); 
-    for (idx, label_name) in input_vec.iter().enumerate(){
+    let mut result: HashMap<String, i32> = HashMap::new();
+    for (idx, label_name) in input_vec.iter().enumerate() {
         result.insert(String::from(label_name), idx as i32);
     }
     Ok(result)
 }
 
-pub fn get_model_classes_from_yaml(input: &str) -> anyhow::Result<HashMap<String,i32>> {
+pub fn get_model_classes_from_yaml(input: &str) -> anyhow::Result<HashMap<String, i32>> {
     let f = std::fs::File::open(input)?;
     let model_deets: ModelDetails = serde_yaml::from_reader(f)?;
     Ok(class_vec2hash(model_deets.names).unwrap())

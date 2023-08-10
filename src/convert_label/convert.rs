@@ -3,11 +3,13 @@ use crate::kesa_utils::file_utils::{
     get_all_json, get_model_classes_from_yaml, read_shapes_from_json,
 };
 use crate::kesa_utils::kesa_error::KesaError;
+use crate::yolo;
 use conv::ValueFrom;
 use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use std::fs::File;
+use std::io::Write;
 use std::str::FromStr;
-use std::{cmp::min, fmt::Write};
+use std::{cmp::min};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Copy)]
@@ -69,7 +71,9 @@ pub fn convert(settings: ConvertSettings) {
         json_path.set_extension("txt");
         let mut txtfile = File::create(&json_path).expect("failed in creating file");
         for annotations in &shapes.unwrap() {
-            let penis: YoloLabel = annotations.convert2yolo(settings.classes.to_owned());
+            let yolo_labels: YoloLabel = annotations.convert2yolo(settings.classes.to_owned());
+            txtfile.write_all(format!("{:?} {:?} {:?} {:?} {:?}", &yolo_labels.label_index.to_owned(), &yolo_labels.x.to_owned(), &yolo_labels.y.to_owned(), &yolo_labels.w.to_owned(), &yolo_labels.h.to_owned()).as_bytes()).expect("Error In writing file to txt");
+            txtfile.write_all("\n".as_bytes()).expect("Error in writing space!");
         }
     }
     progress.finish_with_message("conversion done!");
