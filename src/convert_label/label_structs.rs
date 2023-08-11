@@ -1,10 +1,6 @@
-
 use serde_derive::{Deserialize, Serialize};
 
-
 use std::collections::HashMap;
-
-
 
 /// stores generic values that most annotated images have
 #[derive(Debug, Clone)]
@@ -122,11 +118,12 @@ pub struct LabelMeShapes {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+/// must match actual labelme JSON file
 pub struct LabelMeLabel {
     pub version: String,
     pub flags: HashMap<String, String>,
     pub shapes: Vec<LabelMeShapes>,
-    pub imagePath: String, //must match actual LabelMe json, so keysmust match
+    pub imagePath: String,
     pub imageData: String,
     pub imageHeight: i32,
     pub imageWidth: i32,
@@ -142,6 +139,4 @@ impl LabelMeLabel {
     pub fn image_height(&self) -> i32 {
         self.imageHeight
     }
-
-
 }
