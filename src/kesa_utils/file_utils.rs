@@ -2,13 +2,12 @@ use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints,
 use anyhow;
 
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{Result};
+use serde_json::Result;
 use serde_yaml::{self};
 use std::collections::HashMap;
 
-
-
-use std::{fmt::Write};
+use std::fmt::Write;
+use std::path::Path;
 use std::{ffi::OsStr, fs, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,6 +45,15 @@ pub fn get_all_json(input: &str) -> anyhow::Result<Vec<PathBuf>> {
         }
     }
     Ok(result)
+}
+
+pub fn get_extension_from_str(input_str: &str) -> Option<&str> {
+    Path::new(input_str).extension().and_then(OsStr::to_str)
+}
+
+pub fn get_image_from_json_path(input_json_path: &str) -> anyhow::Result<PathBuf> {
+    let extension = get_extension_from_str(input_str).unwrap();
+    println!("{:?}", extension);
 }
 
 pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnnotation>> {

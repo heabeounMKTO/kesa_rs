@@ -1,6 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
 
-
 use tch::kind;
 use tch::IValue;
 use tch::Tensor;
