@@ -1,10 +1,10 @@
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use std::io;
+
+
 use tch::kind;
 use tch::IValue;
 use tch::Tensor;
-use tch::{self, vision::image};
+use tch::{self};
 
 #[derive(Debug, Clone, Copy)]
 pub struct BBox {
@@ -138,7 +138,7 @@ impl YOLO {
             .unwrap()
             .to_device(self.device);
         println!("Inference Time: {:?}", start.elapsed());
-        let result = self.non_max_suppression(&pred.get(0), 0.1, 0.1);
+        let _result = self.non_max_suppression(&pred.get(0), 0.1, 0.1);
     }
 
     fn iou(&self, b1: &BBox, b2: &BBox) -> f64 {

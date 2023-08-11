@@ -1,15 +1,15 @@
 use crate::convert_label::label_structs::YoloLabel;
 use crate::kesa_utils::file_utils::{
-    get_all_json, get_model_classes_from_yaml, read_shapes_from_json,
+    get_all_json, read_shapes_from_json,
 };
 use crate::kesa_utils::kesa_error::KesaError;
-use crate::yolo;
+
 use conv::ValueFrom;
-use indicatif::{ProgressBar, ProgressState, ProgressStyle};
+use indicatif::{ProgressBar};
 use std::fs::File;
 use std::io::Write;
 use std::str::FromStr;
-use std::{cmp::min};
+
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Copy)]
@@ -17,6 +17,7 @@ pub enum ConvertTarget {
     Yolo,
     Pascal,
     Coco,
+    LabelMe,
 }
 
 impl FromStr for ConvertTarget {
@@ -26,6 +27,7 @@ impl FromStr for ConvertTarget {
             "yolo" => Ok(ConvertTarget::Yolo),
             "coco" => Ok(ConvertTarget::Coco),
             "pascal" => Ok(ConvertTarget::Pascal),
+            "labelme" => Ok(ConvertTarget::LabelMe),
             _ => Err(KesaError::KesaUnknownTypeError(String::from(format!(
                 "\nkesa does not suppourt target '{}' for conversion\n",
                 input_type
