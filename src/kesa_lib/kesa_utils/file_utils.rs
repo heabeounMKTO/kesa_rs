@@ -52,8 +52,9 @@ pub fn get_extension_from_str(input_str: &str) -> Option<&str> {
 }
 
 pub fn get_image_from_json_path(input_json_path: &str) -> anyhow::Result<PathBuf> {
-    let extension = get_extension_from_str(input_str).unwrap();
+    let extension = get_extension_from_str(input_json_path).unwrap();
     println!("{:?}", extension);
+    Ok(PathBuf::from(input_json_path))
 }
 
 pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnnotation>> {

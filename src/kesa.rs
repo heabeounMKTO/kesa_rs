@@ -1,8 +1,5 @@
-mod convert_label;
-mod kesa_utils;
-mod label;
-mod yolo;
-use crate::kesa_utils::file_utils::get_model_classes_from_yaml;
+use kesa_lib::*;
+use kesa_lib::kesa_utils::file_utils::get_model_classes_from_yaml;
 
 use clap::Parser;
 use convert_label::convert::{convert, ConvertTarget};

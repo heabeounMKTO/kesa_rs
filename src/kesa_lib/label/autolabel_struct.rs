@@ -3,7 +3,6 @@ use crate::kesa_utils::kesa_error::KesaError;
 use crate::yolo::yolo;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Copy)]
 pub struct LabelSettings {
     pub model: yolo::YOLO,
     pub batch_size: u16,
@@ -12,5 +11,4 @@ pub struct LabelSettings {
     beefy ass pc u better pay me or
     hire someone to change lmaos
     */
-    pub config: ModelDetails,
 }
