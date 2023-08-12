@@ -16,6 +16,22 @@ pub struct ModelDetails {
     pub input_size: Vec<String>, // TODO: add input_size to python export scripts
 }
 
+pub struct LabelExportFolderDetails {
+    pub train_path: String,
+    pub valid_path: String,
+    pub test_path: String,
+    pub data_yml_path: String
+}
+
+pub fn create_export_folder(export_path: Option<String>) -> anyhow::Result<LabelExportFolderDetails> {
+    let export_settings: LabelExportFolderDetails = match export_path {
+        Some(export_path) => todo!(),
+        _ => todo!()
+    };
+    Ok(export_settings)
+}
+
+
 pub fn class_vec2hash(input_vec: Vec<String>) -> Result<HashMap<String, i32>> {
     let mut result: HashMap<String, i32> = HashMap::new();
     for (idx, label_name) in input_vec.iter().enumerate() {
