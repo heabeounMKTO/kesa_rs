@@ -140,16 +140,10 @@ pub fn get_extension_from_str(input_str: &str) -> Option<&str> {
 
 pub fn get_image_from_json_path(input_json_path: &str) -> anyhow::Result<PathBuf> {
     let extension = get_extension_from_str(input_json_path).unwrap();
-    println!("{:?}", extension);
+    // println!("{:?}", extension);
     Ok(PathBuf::from(input_json_path))
 }
 
-
-pub fn get_image_from_txt_path(input_txt_path: &str) -> anyhow::Result<PathBuf> {
-    // unfinished pung leng dota wafak
-    let extension = get_extension_from_str(input_txt_path).unwrap();
-    
-}
 
 pub fn get_all_txt(input: &str) -> anyhow::Result<Vec<PathBuf>> {
     // not used, use find_filetype instead
@@ -205,4 +199,6 @@ pub fn move_labels_to_export_folder(input_folder: String, output_folder: String)
         "Moving labels from {:?} to {:?}",
         &input_folder, &output_folder
     );
+    let all_txt = get_all_txt(&input_folder);
+    dbg!(all_txt);
 }

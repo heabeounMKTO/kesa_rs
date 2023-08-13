@@ -94,14 +94,6 @@ pub fn convert(settings: ConvertSettings) {
     }
     let ayylmao: LabelExportFolderDetails =
         file_utils::create_export_folder(Some(String::from("export"))).unwrap();
-    println!(
-        "dbg LabelExportFolderDetails : {:?}",
-        &ayylmao.get_train_image_and_label_path()
-    );
-    println!(
-        "dbg LabelExportFolderDetails : {:?}",
-        &ayylmao.get_valid_image_and_label_path()
-    );
     progress.finish_with_message("conversion done!");
     println!("Conversion done in {:#?}", start.elapsed());
 }
