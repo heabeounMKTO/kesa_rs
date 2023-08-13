@@ -25,6 +25,15 @@ pub struct LabelExportFolderDetails {
     pub data_yml_path: String,
 }
 
+impl LabelExportFolderDetails {
+    pub fn get_train_image_and_label_path(&self) -> Vec<String>{
+        let img_pth = format!("{}{}", self.train_path, "/images");
+        let label_path = format!("{}{}", self.train_path, "/labels");
+        let ayylmao: Vec<String> = vec![img_pth, label_path];
+        ayylmao
+    }
+}
+
 pub fn create_export_folder(
     export_path: Option<String>,
 ) -> anyhow::Result<LabelExportFolderDetails> {
