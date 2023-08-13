@@ -32,6 +32,18 @@ impl LabelExportFolderDetails {
         let ayylmao: Vec<String> = vec![img_pth, label_path];
         ayylmao
     }
+    pub fn get_valid_image_and_label_path(&self) -> Vec<String>{
+        let img_pth = format!("{}{}", self.valid_path, "/images");
+        let label_path = format!("{}{}", self.valid_path, "/labels");
+        let ayylmao: Vec<String> = vec![img_pth, label_path];
+        ayylmao
+    }
+    pub fn get_test_image_and_label_path(&self) -> Vec<String>{
+        let img_pth = format!("{}{}", self.test_path, "/images");
+        let label_path = format!("{}{}", self.test_path, "/labels");
+        let ayylmao: Vec<String> = vec![img_pth, label_path];
+        ayylmao
+    }
 }
 
 pub fn create_export_folder(
