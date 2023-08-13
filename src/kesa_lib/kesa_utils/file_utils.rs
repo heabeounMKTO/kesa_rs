@@ -1,6 +1,7 @@
 use crate::convert_label::label_structs::{GenericAnnotation, GenericLabelPoints, LabelMeLabel};
 use anyhow;
 
+use owo_colors::colors::xterm::FuchsiaPink;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Result;
 use serde_yaml::{self};
@@ -16,7 +17,6 @@ pub struct ModelDetails {
     pub input_size: Vec<String>, // TODO: add input_size to python export scripts
 }
 
-
 #[derive(Debug)]
 pub struct LabelExportFolderDetails {
     pub train_path: String,
@@ -26,19 +26,19 @@ pub struct LabelExportFolderDetails {
 }
 
 impl LabelExportFolderDetails {
-    pub fn get_train_image_and_label_path(&self) -> Vec<String>{
+    pub fn get_train_image_and_label_path(&self) -> Vec<String> {
         let img_pth = format!("{}{}", self.train_path, "/images");
         let label_path = format!("{}{}", self.train_path, "/labels");
         let ayylmao: Vec<String> = vec![img_pth, label_path];
         ayylmao
     }
-    pub fn get_valid_image_and_label_path(&self) -> Vec<String>{
+    pub fn get_valid_image_and_label_path(&self) -> Vec<String> {
         let img_pth = format!("{}{}", self.valid_path, "/images");
         let label_path = format!("{}{}", self.valid_path, "/labels");
         let ayylmao: Vec<String> = vec![img_pth, label_path];
         ayylmao
     }
-    pub fn get_test_image_and_label_path(&self) -> Vec<String>{
+    pub fn get_test_image_and_label_path(&self) -> Vec<String> {
         let img_pth = format!("{}{}", self.test_path, "/images");
         let label_path = format!("{}{}", self.test_path, "/labels");
         let ayylmao: Vec<String> = vec![img_pth, label_path];
@@ -122,6 +122,8 @@ pub fn get_model_config_from_yaml(input: &str) -> anyhow::Result<ModelDetails> {
 }
 
 pub fn get_all_json(input: &str) -> anyhow::Result<Vec<PathBuf>> {
+    // not used, use find_filetype instead
+    // edit aight nvm we will have a separate thing for txt lmao
     let mut result = vec![];
     for path in fs::read_dir(input)? {
         let path = path?.path();
@@ -141,6 +143,27 @@ pub fn get_image_from_json_path(input_json_path: &str) -> anyhow::Result<PathBuf
     println!("{:?}", extension);
     Ok(PathBuf::from(input_json_path))
 }
+
+
+pub fn get_image_from_txt_path(input_txt_path: &str) -> anyhow::Result<PathBuf> {
+    // unfinished pung leng dota wafak
+    let extension = get_extension_from_str(input_txt_path).unwrap();
+    
+}
+
+pub fn get_all_txt(input: &str) -> anyhow::Result<Vec<PathBuf>> {
+    // not used, use find_filetype instead
+    // edit aight nvm we will have a separate thing for txt lmao
+    let mut result = vec![];
+    for path in fs::read_dir(input)? {
+        let path = path?.path();
+        if let Some("txt") = path.extension().and_then(OsStr::to_str) {
+            result.push(path.to_owned())
+        }
+    }
+    Ok(result)
+}
+
 
 pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnnotation>> {
     let mut result = vec![];
@@ -171,4 +194,15 @@ pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnno
         result.push(anno.to_owned());
     }
     Ok(result)
+}
+
+
+
+pub fn move_labels_to_export_folder(input_folder: String, output_folder: String) {
+    // will add handling of files according to convert format later,
+    // currently it's just for YOLO format
+    println!(
+        "Moving labels from {:?} to {:?}",
+        &input_folder, &output_folder
+    );
 }

@@ -1,5 +1,7 @@
 use crate::convert_label::label_structs::YoloLabel;
-use crate::kesa_utils::file_utils::{self, get_all_json, read_shapes_from_json, LabelExportFolderDetails};
+use crate::kesa_utils::file_utils::{
+    self, get_all_json, read_shapes_from_json, LabelExportFolderDetails,
+};
 use crate::kesa_utils::kesa_error::KesaError;
 
 use conv::ValueFrom;
@@ -90,9 +92,16 @@ pub fn convert(settings: ConvertSettings) {
                 .expect("Error in writing space!");
         }
     }
-    let ayylmao: LabelExportFolderDetails = file_utils::create_export_folder(Some(String::from("export"))).unwrap();
-    println!("dbg LabelExportFolderDetails : {:?}", &ayylmao.get_train_image_and_label_path());
-    println!("dbg LabelExportFolderDetails : {:?}", &ayylmao.get_valid_image_and_label_path());
+    let ayylmao: LabelExportFolderDetails =
+        file_utils::create_export_folder(Some(String::from("export"))).unwrap();
+    println!(
+        "dbg LabelExportFolderDetails : {:?}",
+        &ayylmao.get_train_image_and_label_path()
+    );
+    println!(
+        "dbg LabelExportFolderDetails : {:?}",
+        &ayylmao.get_valid_image_and_label_path()
+    );
     progress.finish_with_message("conversion done!");
     println!("Conversion done in {:#?}", start.elapsed());
 }
