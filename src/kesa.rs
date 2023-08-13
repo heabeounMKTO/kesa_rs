@@ -1,5 +1,5 @@
-use kesa_lib::*;
 use kesa_lib::kesa_utils::file_utils::get_model_classes_from_yaml;
+use kesa_lib::*;
 
 use clap::Parser;
 use convert_label::convert::{convert, ConvertTarget};

@@ -16,20 +16,55 @@ pub struct ModelDetails {
     pub input_size: Vec<String>, // TODO: add input_size to python export scripts
 }
 
+
+#[derive(Debug)]
 pub struct LabelExportFolderDetails {
     pub train_path: String,
     pub valid_path: String,
     pub test_path: String,
-    pub data_yml_path: String
+    pub data_yml_path: String,
 }
 
-pub fn create_export_folder(export_path: Option<String>) -> anyhow::Result<LabelExportFolderDetails> {
+pub fn create_export_folder(
+    export_path: Option<String>,
+) -> anyhow::Result<LabelExportFolderDetails> {
     let export_settings: LabelExportFolderDetails = match export_path {
         Some(export_path) => {
             let train_path = format!("{}/train", &export_path);
             let valid_path = format!("{}/valid", &export_path);
             let test_path = format!("{}/test", &export_path);
             let data_yml_path = format!("{}/data.yaml", &export_path);
+            // fs::create_dir_all(&test_path).expect("cannot create train_path");
+            // fs::create_dir_all(&valid_path).expect("cannot create valid_path");
+            // fs::create_dir_all(&test_path).expect("cannot create test path");
+
+            fs::create_dir_all(format!("{}/train/images", &export_path))
+                .expect("cannot create train_path/image");
+            fs::create_dir_all(format!("{}/valid/images", &export_path))
+                .expect("cannot create valid_path/image");
+            fs::create_dir_all(format!("{}/valid/images", &export_path))
+                .expect("cannot create test_path/image");
+
+            fs::create_dir_all(format!("{}/train/labels", &export_path))
+                .expect("cannot create train_path/labels");
+            fs::create_dir_all(format!("{}/valid/labels", &export_path))
+                .expect("cannot create valid_path/labels");
+            fs::create_dir_all(format!("{}/valid/labels", &export_path))
+                .expect("cannot create test_path/labels");
+
+            fs::File::create(&data_yml_path).expect("cannot create data.yaml");
+            LabelExportFolderDetails {
+                train_path,
+                valid_path,
+                test_path,
+                data_yml_path,
+            }
+        }
+        None => {
+            let train_path = String::from("export/train");
+            let valid_path = String::from("export/valid");
+            let test_path = String::from("export/test");
+            let data_yml_path = String::from("export/data.yaml");
             fs::create_dir_all(&test_path).expect("cannot create train_path");
             fs::create_dir_all(&valid_path).expect("cannot create valid_path");
             fs::create_dir_all(&test_path).expect("cannot create test path");
@@ -38,14 +73,12 @@ pub fn create_export_folder(export_path: Option<String>) -> anyhow::Result<Label
                 train_path,
                 valid_path,
                 test_path,
-                data_yml_path
+                data_yml_path,
             }
-        },
-        _ => todo!()
+        }
     };
     Ok(export_settings)
 }
-
 
 pub fn class_vec2hash(input_vec: Vec<String>) -> Result<HashMap<String, i32>> {
     let mut result: HashMap<String, i32> = HashMap::new();
