@@ -25,7 +25,22 @@ pub struct LabelExportFolderDetails {
 
 pub fn create_export_folder(export_path: Option<String>) -> anyhow::Result<LabelExportFolderDetails> {
     let export_settings: LabelExportFolderDetails = match export_path {
-        Some(export_path) => todo!(),
+        Some(export_path) => {
+            let train_path = format!("{}/train", &export_path);
+            let valid_path = format!("{}/valid", &export_path);
+            let test_path = format!("{}/test", &export_path);
+            let data_yml_path = format!("{}/data.yaml", &export_path);
+            fs::create_dir_all(&test_path).expect("cannot create train_path");
+            fs::create_dir_all(&valid_path).expect("cannot create valid_path");
+            fs::create_dir_all(&test_path).expect("cannot create test path");
+            fs::File::create(&data_yml_path).expect("cannot create data.yaml");
+            LabelExportFolderDetails {
+                train_path,
+                valid_path,
+                test_path,
+                data_yml_path
+            }
+        },
         _ => todo!()
     };
     Ok(export_settings)

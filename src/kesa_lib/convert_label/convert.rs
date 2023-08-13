@@ -1,5 +1,5 @@
 use crate::convert_label::label_structs::YoloLabel;
-use crate::kesa_utils::file_utils::{get_all_json, read_shapes_from_json};
+use crate::kesa_utils::file_utils::{get_all_json, read_shapes_from_json, self};
 use crate::kesa_utils::kesa_error::KesaError;
 
 use conv::ValueFrom;
@@ -90,6 +90,7 @@ pub fn convert(settings: ConvertSettings) {
                 .expect("Error in writing space!");
         }
     }
+    file_utils::create_export_folder(Some(String::from("export")));
     progress.finish_with_message("conversion done!");
     println!("Conversion done in {:#?}", start.elapsed());
 }
