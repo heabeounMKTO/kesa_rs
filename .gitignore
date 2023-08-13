@@ -16,3 +16,4 @@ Cargo.lock
 #testings folders
 detect_models/*
 test/*
+export/*
