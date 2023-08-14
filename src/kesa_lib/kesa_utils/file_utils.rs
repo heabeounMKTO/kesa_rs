@@ -7,6 +7,7 @@ use serde_json::Result;
 use serde_yaml::{self};
 use std::collections::HashMap;
 
+use std::default;
 use std::fmt::Write;
 use std::path::Path;
 use std::{ffi::OsStr, fs, path::PathBuf};
@@ -24,6 +25,24 @@ pub struct LabelExportFolderDetails {
     pub test_path: String,
     pub data_yml_path: String,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct LabelPortions {
+    pub train: f32,
+    pub valid: f32,
+    pub test: f32
+}
+
+impl LabelPortions {
+    pub fn new(train_set: f32, valid_set: f32, test_set: f32) -> LabelPortions{
+        LabelPortions {
+            train: train_set,
+            valid: valid_set,
+            test: test_set
+        } 
+    }
+}
+
 
 impl LabelExportFolderDetails {
     pub fn get_train_image_and_label_path(&self) -> Vec<String> {
@@ -108,19 +127,16 @@ pub fn class_vec2hash(input_vec: Vec<String>) -> Result<HashMap<String, i32>> {
     }
     Ok(result)
 }
-
 pub fn get_model_classes_from_yaml(input: &str) -> anyhow::Result<HashMap<String, i32>> {
     let f = std::fs::File::open(input)?;
     let model_deets: ModelDetails = serde_yaml::from_reader(f)?;
     Ok(class_vec2hash(model_deets.names).unwrap())
 }
-
 pub fn get_model_config_from_yaml(input: &str) -> anyhow::Result<ModelDetails> {
     let f = std::fs::File::open(input)?;
     let model_config: ModelDetails = serde_yaml::from_reader(f)?;
     Ok(model_config)
 }
-
 pub fn get_all_json(input: &str) -> anyhow::Result<Vec<PathBuf>> {
     // not used, use find_filetype instead
     // edit aight nvm we will have a separate thing for txt lmao
@@ -133,18 +149,14 @@ pub fn get_all_json(input: &str) -> anyhow::Result<Vec<PathBuf>> {
     }
     Ok(result)
 }
-
 pub fn get_extension_from_str(input_str: &str) -> Option<&str> {
     Path::new(input_str).extension().and_then(OsStr::to_str)
 }
-
 pub fn get_image_from_json_path(input_json_path: &str) -> anyhow::Result<PathBuf> {
     let extension = get_extension_from_str(input_json_path).unwrap();
     // println!("{:?}", extension);
     Ok(PathBuf::from(input_json_path))
 }
-
-
 pub fn get_all_txt(input: &str) -> anyhow::Result<Vec<PathBuf>> {
     // not used, use find_filetype instead
     // edit aight nvm we will have a separate thing for txt lmao
@@ -157,8 +169,6 @@ pub fn get_all_txt(input: &str) -> anyhow::Result<Vec<PathBuf>> {
     }
     Ok(result)
 }
-
-
 pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnnotation>> {
     let mut result = vec![];
     let contents =
@@ -190,15 +200,40 @@ pub fn read_shapes_from_json(input_json: &str) -> anyhow::Result<Vec<GenericAnno
     Ok(result)
 }
 
-
-
-pub fn move_labels_to_export_folder(input_folder: String, output_folder: String) {
+// MOVE UR SHIT BRAH
+pub fn move_labels_to_export_folder(
+    input_folder: &str,
+    output_folder: &str,
+    export_portions: LabelPortions
+) {
     // will add handling of files according to convert format later,
     // currently it's just for YOLO format
     println!(
         "Moving labels from {:?} to {:?}",
         &input_folder, &output_folder
     );
-    let all_txt = get_all_txt(&input_folder);
-    dbg!(all_txt);
+
+    let mut all_txt = get_all_txt(&input_folder);
+
+    let train_ratio:f32 = {
+        ((all_txt.as_ref().unwrap().len() as f32)*&export_portions.train).floor()
+    };
+    
+    let valid_ratio:f32 = {
+        ((all_txt.as_ref().unwrap().len() as f32)*&export_portions.valid).floor()
+    };
+    
+    let test_ratio:f32 = {
+        ((all_txt.as_ref().unwrap().len() as f32)*&export_portions.test).floor()
+    };
+    
+    dbg!(all_txt.as_ref().unwrap().len() as f32,train_ratio, valid_ratio, test_ratio); 
+    let train_batch = all_txt.split_off(train_ratio as i64);
+    let valid_batch = all_txt.split_off(valid_ratio as i64);
+    let test_batch = all_txt.split_off(valid_ratio as i64);
+    dbg!(train_batch, valid_batch, test_batch);    
+    for txtfiles in all_txt.unwrap() {
+        let stem = txtfiles.as_path().file_stem().unwrap();
+        
+    }
 }

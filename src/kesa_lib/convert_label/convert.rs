@@ -1,6 +1,7 @@
 use crate::convert_label::label_structs::YoloLabel;
 use crate::kesa_utils::file_utils::{
-    self, get_all_json, read_shapes_from_json, LabelExportFolderDetails,
+    self, get_all_json, move_labels_to_export_folder, read_shapes_from_json,
+    LabelExportFolderDetails,
 };
 use crate::kesa_utils::kesa_error::KesaError;
 
@@ -41,22 +42,25 @@ pub struct ConvertSettings {
     pub target: ConvertTarget,
     pub classes: HashMap<String, i32>, //NOTE: reads into HashMap for less complex indexing nonsense
     pub input_folder: String,
+    pub export_folder: String,
 }
 impl ConvertSettings {
     pub fn new(
         target: ConvertTarget,
         classes: HashMap<String, i32>,
         input_folder: String,
+        export_folder: String,
     ) -> ConvertSettings {
         ConvertSettings {
             target,
             classes,
             input_folder,
+            export_folder,
         }
     }
 }
 
-pub fn convert(settings: ConvertSettings) {
+pub fn convert(settings: &ConvertSettings) {
     println!(
         "conversion target: {:#?}\nclasses: {:#?}\nfolder: {:#?} ",
         &settings.target,
