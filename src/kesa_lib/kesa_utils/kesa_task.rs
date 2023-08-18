@@ -17,16 +17,19 @@ pub struct KesaConvert {
     settings: ConvertSettings,
 }
 
+//#FIXME: needs consideration, maybe just use ConvertSettings instead of this
 impl KesaConvert {
     pub fn new_convert_setting(
         target: ConvertTarget,
         classes: HashMap<String, i32>,
         input_folder: String,
+        export_folder: String,
     ) -> ConvertSettings {
         ConvertSettings {
             target,
             classes,
             input_folder,
+            export_folder,
         }
     }
 }

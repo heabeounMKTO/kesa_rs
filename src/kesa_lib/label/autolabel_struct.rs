@@ -1,9 +1,8 @@
-use crate::kesa_utils::file_utils::{get_all_json, get_model_classes_from_yaml};
+use crate::kesa_utils::file_utils::{get_all_json, get_model_classes_from_yaml, ModelDetails};
 use crate::kesa_utils::kesa_error::KesaError;
 use crate::yolo::yolo;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Copy)]
 pub struct LabelSettings {
     pub model: yolo::YOLO,
     pub batch_size: u16,
@@ -12,5 +11,5 @@ pub struct LabelSettings {
     beefy ass pc u better pay me or
     hire someone to change lmaos
     */
-    pub config: ModelDetails,
+    pub model_config: ModelDetails,
 }
