@@ -8,6 +8,20 @@ use std::fs;
 use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use crate::output::OutputFormat;
 
+
+/// struct for storing generic xyxy's
+/// for conversion between normalized
+/// and screen coordinates.
+#[derive(Debug)]
+pub struct Xyxy {
+    pub coordinate_type: CoordinateType,
+    pub x1: f32,
+    pub y1: f32,
+    pub x2: f32,
+    pub y2: f32,
+}
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloAnnotation {
     pub class: i64,
@@ -75,21 +89,12 @@ pub struct LabelmeAnnotation {
     pub imageHeight: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Shape {
-    pub label: String,
-    pub points: Vec<Vec<f32>>,
-    pub group_id: Option<String>,
-    pub shape_type: String,
-    pub flags: HashMap<String, String>,
-}
-
 impl LabelmeAnnotation {
     /// converts labelme annotation to yolo shape
     pub fn to_yolo(&self, class_hash: &HashMap<String, i64>) -> Result<Vec<YoloAnnotation>, Error> {
         let mut yolo_label_list: Vec<YoloAnnotation> = vec![];
         for shape in self.shapes.iter() {
-            let temp_xyxy: Xyxy = get_xyxy_from_shape(&shape);
+            let temp_xyxy: Xyxy = get_xyxy_from_shape(&shape, CoordinateType::Normalized);
             let x = ((temp_xyxy.x1 + temp_xyxy.x2) / 2.0) / self.imageWidth as f32;
             let y = ((temp_xyxy.y1 + temp_xyxy.y2) / 2.0) / self.imageHeight as f32;
             let w = (temp_xyxy.x2 - temp_xyxy.x1) / self.imageWidth as f32;
@@ -108,8 +113,20 @@ impl LabelmeAnnotation {
     }
 }
 
-pub fn get_xyxy_from_shape(input_shape: &Shape) -> xyxy {
-    xyxy {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Shape {
+    pub label: String,
+    pub points: Vec<Vec<f32>>,
+    pub group_id: Option<String>,
+    pub shape_type: String,
+    pub flags: HashMap<String, String>,
+}
+
+
+
+pub fn get_xyxy_from_shape(input_shape: &Shape, coordinate_type: CoordinateType) -> Xyxy {
+    Xyxy {
+        coordinate_type: coordinate_type, 
         x1: input_shape.points[0][0].to_owned(),
         y1: input_shape.points[0][1].to_owned(),
         x2: input_shape.points[1][0].to_owned(),
