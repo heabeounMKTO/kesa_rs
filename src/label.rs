@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::fs;
 use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use crate::output::OutputFormat;
-
+use crate::kesa_al::IMG_SIZE;
 
 /// struct for storing generic xyxy's
 /// for conversion between normalized
@@ -21,6 +21,61 @@ pub struct Xyxy {
     pub y2: f32,
 }
 
+
+impl Xyxy {
+    pub fn new(coordinate_type: CoordinateType, x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
+        Xyxy {
+            coordinate_type,
+            x1,
+            y1,
+            x2,
+            y2,
+        }
+    }
+    /// coordinates from yolo
+    pub fn from_yolo(input_yolo: &YoloAnnotation) -> Result<Self, Error> {
+        Ok(Xyxy {
+            coordinate_type: CoordinateType::Screen,
+            x1: input_yolo.xmin,
+            y1: input_yolo.ymin,
+            x2: input_yolo.w,
+            y2: input_yolo.h,
+        })
+    }
+    pub fn to_screen(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
+        match &self.coordinate_type {
+            CoordinateType::Screen => {
+                panic!("Given Coordinate is already screen!")
+            }
+            CoordinateType::Normalized => Ok(Xyxy {
+                coordinate_type: CoordinateType::Screen,
+                x1: self.x1 * img_dims.0 as f32,
+                y1: self.y1 * img_dims.1 as f32,
+                x2: self.x2 * img_dims.0 as f32,
+                y2: self.y2 * img_dims.1 as f32,
+            }),
+        }
+    }
+
+    pub fn points(&self) -> Vec<Vec<f32>> {
+        vec![vec![self.x1, self.y1], vec![self.x2, self.y2]]
+    }
+    /// returns normalized coordinates
+    pub fn to_normalized(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
+        match &self.coordinate_type {
+            CoordinateType::Normalized => {
+                panic!("Given Coordinates is already normalized!")
+            }
+            CoordinateType::Screen => Ok(Xyxy {
+                coordinate_type: CoordinateType::Normalized,
+                x1: self.x1 / img_dims.0 as f32,
+                y1: self.y1 / img_dims.1 as f32,
+                x2: self.x2 / img_dims.0 as f32,
+                y2: self.y2 / img_dims.1 as f32,
+            }),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloAnnotation {
@@ -147,72 +202,6 @@ pub enum CoordinateType {
     Normalized,
 }
 
-/// struct for storing generic xyxy's
-/// for conversion between normalized
-/// and screen coordinates.
-#[derive(Debug)]
-pub struct Xyxy {
-    pub coordinate_type: CoordinateType,
-    pub x1: f32,
-    pub y1: f32,
-    pub x2: f32,
-    pub y2: f32,
-}
-
-impl Xyxy {
-    pub fn new(coordinate_type: CoordinateType, x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
-        Xyxy {
-            coordinate_type,
-            x1,
-            y1,
-            x2,
-            y2,
-        }
-    }
-    /// coordinates from yolo
-    pub fn from_yolo(input_yolo: &YoloAnnotation) -> Result<Self, Error> {
-        Ok(Xyxy {
-            coordinate_type: CoordinateType::Screen,
-            x1: input_yolo.xmin,
-            y1: input_yolo.ymin,
-            x2: input_yolo.w,
-            y2: input_yolo.h,
-        })
-    }
-    pub fn to_screen(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
-        match &self.coordinate_type {
-            CoordinateType::Screen => {
-                panic!("Given Coordinate is already screen!")
-            }
-            CoordinateType::Normalized => Ok(Xyxy {
-                coordinate_type: CoordinateType::Screen,
-                x1: self.x1 * img_dims.0 as f32,
-                y1: self.y1 * img_dims.1 as f32,
-                x2: self.x2 * img_dims.0 as f32,
-                y2: self.y2 * img_dims.1 as f32,
-            }),
-        }
-    }
-
-    pub fn points(&self) -> Vec<Vec<f32>> {
-        vec![vec![self.x1, self.y1], vec![self.x2, self.y2]]
-    }
-    /// returns normalized coordinates
-    pub fn to_normalized(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
-        match &self.coordinate_type {
-            CoordinateType::Normalized => {
-                panic!("Given Coordinates is already normalized!")
-            }
-            CoordinateType::Screen => Ok(Xyxy {
-                coordinate_type: CoordinateType::Normalized,
-                x1: self.x1 / img_dims.0 as f32,
-                y1: self.y1 / img_dims.1 as f32,
-                x2: self.x2 / img_dims.0 as f32,
-                y2: self.y2 / img_dims.1 as f32,
-            }),
-        }
-    }
-}
 
 // not sure where to put these, just leaving it here for now :|
 #[derive(Debug, Clone)]
@@ -265,7 +254,7 @@ impl OutputFormat for Embeddings {
                     label: class_name,
                     points: xy_coords,
                     shape_type: shape.to_owned(),
-                    group_id: gid_idx.to_string(),
+                    group_id: Some(gid_idx.to_string()),
                     flags: flags.to_owned(),
                 };
                 shape_vec.push(_shape);
@@ -307,7 +296,7 @@ impl OutputFormat for Embeddings {
         let base64img: String = dynimg2string(image_file).unwrap();
         Ok(LabelmeAnnotation {
             version,
-            flags,
+            flags: Some(flags),
             shapes: all_shapes,
             imageWidth: original_dimension.0.to_owned() as i64,
             imageHeight: original_dimension.1.to_owned() as i64,

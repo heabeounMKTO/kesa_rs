@@ -4,6 +4,7 @@ mod image_utils;
 mod label;
 mod model;
 mod output;
+
 use crate::{
     backends::{
         candle_backend::CandleModel, compute_backends::InferenceModel, tch_backend::TchModel,
@@ -75,7 +76,7 @@ struct CliArguments {
 }
 
 lazy_static! {
-    static ref IMG_SIZE: u32 = {
+    pub static ref IMG_SIZE: u32 = {
         let args = CliArguments::parse();
         let imgsz = args.imgsize;
         imgsz

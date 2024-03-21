@@ -1,5 +1,5 @@
 mod fileutils;
-mod iamge_augmentations;
+mod image_augmentations;
 mod image_utils;
 mod label;
 mod output;
