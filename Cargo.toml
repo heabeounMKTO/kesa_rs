@@ -17,17 +17,20 @@ serde_derive = "1.0.181"
 serde_json = "1.0.104"
 serde_yaml = "0.9.25"
 sorted-list = "0.2.0"
-tch = "0.13.0"
 ort = { version = "2.0.0-alpha.4", features = ["tensorrt", "load-dynamic", "copy-dylibs", "download-binaries", "cuda"] }
 base64 = "0.22.0"
 lazy_static = "1.4.0"
 plotters = "0.3.5"
 rand = "0.8.5"
 ndarray = "0.15.6"
+tch = "0.15.0"
+image = "0.25.0"
+rayon = "1.9.0"
+half = "2.4.0"
 
 [lib]
-name = "kesa_lib"
-path = "src/kesa_lib/lib.rs"
+name = "kesa"
+path = "src/lib.rs"
 
 
 [[bin]]
@@ -37,3 +40,9 @@ path = "src/kesa_al.rs"
 [[bin]]
 name = "kesa_l2y"
 path = "src/kesa_l2y.rs"
+
+
+[profile.release]
+opt-level = "z"
+strip = true  # WE STRIPPING THE SYMBOLS WITH THIS ONE  🗣️🗣️🔥🔥🔥
+lto = true

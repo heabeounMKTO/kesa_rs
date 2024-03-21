@@ -1,6 +1,6 @@
 use image::DynamicImage;
 
-use crate::labels::{LabelmeAnnotation, Shape, YoloAnnotation};
+use crate::label::{LabelmeAnnotation, Shape, YoloAnnotation};
 use std::collections::HashMap;
 
 /// output formats functions traits

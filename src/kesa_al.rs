@@ -1,16 +1,15 @@
 mod backends;
 mod fileutils;
-mod imgutils;
-mod labels;
+mod image_utils;
+mod label;
 mod model;
 mod output;
-mod plotting;
 use crate::{
     backends::{
         candle_backend::CandleModel, compute_backends::InferenceModel, tch_backend::TchModel,
     },
     fileutils::{get_all_images, write_labelme_to_json},
-    labels::LabelmeAnnotation,
+    label::LabelmeAnnotation,
     model::DatasetInfo,
     output::OutputFormat,
 };

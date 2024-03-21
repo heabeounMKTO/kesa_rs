@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
-
+use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use crate::output::OutputFormat;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,19 +84,12 @@ pub struct Shape {
     pub flags: HashMap<String, String>,
 }
 
-pub struct xyxy {
-    pub x1: f32,
-    pub y1: f32,
-    pub x2: f32,
-    pub y2: f32,
-}
-
 impl LabelmeAnnotation {
     /// converts labelme annotation to yolo shape
     pub fn to_yolo(&self, class_hash: &HashMap<String, i64>) -> Result<Vec<YoloAnnotation>, Error> {
         let mut yolo_label_list: Vec<YoloAnnotation> = vec![];
         for shape in self.shapes.iter() {
-            let temp_xyxy: xyxy = get_xyxy_from_shape(&shape);
+            let temp_xyxy: Xyxy = get_xyxy_from_shape(&shape);
             let x = ((temp_xyxy.x1 + temp_xyxy.x2) / 2.0) / self.imageWidth as f32;
             let y = ((temp_xyxy.y1 + temp_xyxy.y2) / 2.0) / self.imageHeight as f32;
             let w = (temp_xyxy.x2 - temp_xyxy.x1) / self.imageWidth as f32;
@@ -123,6 +116,191 @@ pub fn get_xyxy_from_shape(input_shape: &Shape) -> xyxy {
         y2: input_shape.points[1][1].to_owned(),
     }
 }
+
+
+/// TODO: SHAPE MASK  for segmentation tasks , unimplemnetd for now :|
+pub enum ShapeType {
+    Rectangle,
+    Mask,
+}
+
+#[derive(Debug)]
+pub enum CoordinateType {
+    Screen,
+    Normalized,
+}
+
+/// struct for storing generic xyxy's
+/// for conversion between normalized
+/// and screen coordinates.
+#[derive(Debug)]
+pub struct Xyxy {
+    pub coordinate_type: CoordinateType,
+    pub x1: f32,
+    pub y1: f32,
+    pub x2: f32,
+    pub y2: f32,
+}
+
+impl Xyxy {
+    pub fn new(coordinate_type: CoordinateType, x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
+        Xyxy {
+            coordinate_type,
+            x1,
+            y1,
+            x2,
+            y2,
+        }
+    }
+    /// coordinates from yolo
+    pub fn from_yolo(input_yolo: &YoloAnnotation) -> Result<Self, Error> {
+        Ok(Xyxy {
+            coordinate_type: CoordinateType::Screen,
+            x1: input_yolo.xmin,
+            y1: input_yolo.ymin,
+            x2: input_yolo.w,
+            y2: input_yolo.h,
+        })
+    }
+    pub fn to_screen(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
+        match &self.coordinate_type {
+            CoordinateType::Screen => {
+                panic!("Given Coordinate is already screen!")
+            }
+            CoordinateType::Normalized => Ok(Xyxy {
+                coordinate_type: CoordinateType::Screen,
+                x1: self.x1 * img_dims.0 as f32,
+                y1: self.y1 * img_dims.1 as f32,
+                x2: self.x2 * img_dims.0 as f32,
+                y2: self.y2 * img_dims.1 as f32,
+            }),
+        }
+    }
+
+    pub fn points(&self) -> Vec<Vec<f32>> {
+        vec![vec![self.x1, self.y1], vec![self.x2, self.y2]]
+    }
+    /// returns normalized coordinates
+    pub fn to_normalized(&self, img_dims: &(u32, u32)) -> Result<Self, Error> {
+        match &self.coordinate_type {
+            CoordinateType::Normalized => {
+                panic!("Given Coordinates is already normalized!")
+            }
+            CoordinateType::Screen => Ok(Xyxy {
+                coordinate_type: CoordinateType::Normalized,
+                x1: self.x1 / img_dims.0 as f32,
+                y1: self.y1 / img_dims.1 as f32,
+                x2: self.x2 / img_dims.0 as f32,
+                y2: self.y2 / img_dims.1 as f32,
+            }),
+        }
+    }
+}
+
+// not sure where to put these, just leaving it here for now :|
+#[derive(Debug, Clone)]
+pub struct Embeddings {
+    data: ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>>,
+}
+impl Embeddings {
+    pub fn new(data: ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>>) -> Self {
+        Self { data }
+    }
+
+    pub fn to_vec(&self) -> Result<Vec<Vec<f32>>, Error> {
+        let mut results_vec: Vec<Vec<f32>> = vec![];
+        for n in 0..self.data().shape()[0] {
+            let _a = self.data().view().to_owned().select(Axis(0), &[n]);
+            let _v = Vec::from_iter(_a);
+            results_vec.push(_v);
+        }
+        Ok(results_vec)
+    }
+
+    pub fn data(&self) -> &ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>> {
+        &self.data
+    }
+}
+
+impl OutputFormat for Embeddings {
+    fn to_shape(
+        &self,
+        all_classes: &Vec<String>,
+        original_dimension: &(u32, u32),
+    ) -> Result<Vec<Shape>, Error> {
+        let raw_output_vec = self.to_yolo_vec();
+        let g_id = self.to_vec()?;
+        let mut shape_vec: Vec<Shape> = vec![];
+        let shape = String::from("rectangle");
+        let flags: HashMap<String, String> = HashMap::new();
+        for _yolo in raw_output_vec.into_iter() {
+            for (idx, elem) in _yolo.iter().enumerate() {
+                // we getting the confidence with this one
+                let gid_idx = g_id[idx][6].to_owned() * 100.0;
+
+                let class_index = elem.class as usize;
+                let class_name = all_classes[class_index].to_owned();
+                let xy_coords: Vec<Vec<f32>> = Xyxy::from_yolo(&elem)?
+                    .to_normalized(&(*IMG_SIZE, *IMG_SIZE))?
+                    .to_screen(original_dimension)?
+                    .points();
+                let _shape = Shape {
+                    label: class_name,
+                    points: xy_coords,
+                    shape_type: shape.to_owned(),
+                    group_id: gid_idx.to_string(),
+                    flags: flags.to_owned(),
+                };
+                shape_vec.push(_shape);
+            }
+        }
+        // println!("my penis: {:#?}", raw_output_vec);
+        Ok(shape_vec)
+    }
+    fn to_yolo(&self) -> Result<YoloAnnotation, anyhow::Error> {
+        todo!()
+    }
+    fn to_yolo_vec(&self) -> Result<Vec<YoloAnnotation>, anyhow::Error> {
+        let mut yolo_arr: Vec<YoloAnnotation> = vec![];
+        let raw_output_vec = self.to_vec();
+        for detection in raw_output_vec.into_iter() {
+            for elm in detection {
+                let res = YoloAnnotation::new(
+                    elm[5] as i64, //class
+                    elm[1],        // xmin
+                    elm[2],        // xmax
+                    elm[3],        // w
+                    elm[4],        // h
+                );
+                yolo_arr.push(res);
+            }
+        }
+        Ok(yolo_arr)
+    }
+    fn to_labelme(
+        &self,
+        all_classes: &Vec<String>,
+        original_dimension: &(u32, u32),
+        filename: &str,
+        image_file: &DynamicImage,
+    ) -> Result<LabelmeAnnotation, anyhow::Error> {
+        let all_shapes: Vec<Shape> = self.to_shape(all_classes, original_dimension)?;
+        let version: String = String::from("5.1.1");
+        let flags: HashMap<String, String> = HashMap::new();
+        let base64img: String = dynimg2string(image_file).unwrap();
+        Ok(LabelmeAnnotation {
+            version,
+            flags,
+            shapes: all_shapes,
+            imageWidth: original_dimension.0.to_owned() as i64,
+            imageHeight: original_dimension.1.to_owned() as i64,
+            imageData: base64img,
+            imagePath: String::from(filename),
+        })
+    }
+}
+
+
 
 pub fn read_labels_from_file(filename: &str) -> Result<LabelmeAnnotation, Error> {
     let json_filename = fs::read_to_string(filename).expect("READ ERROR: cannot read jsonfile !");
