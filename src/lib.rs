@@ -1,3 +1,4 @@
+mod splash;
 pub mod backends;
 pub mod fileutils;
 pub mod image_augmentations;

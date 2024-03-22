@@ -5,7 +5,8 @@ mod label;
 mod model;
 mod output;
 mod plotting;
-
+mod splash;
+use splash::print_splash;
 use crate::{
     backends::{
         candle_backend::CandleModel, compute_backends::InferenceModel, tch_backend::TchModel,
@@ -85,6 +86,8 @@ lazy_static! {
 }
 
 fn main() -> Result<(), Error> {
+    print_splash();
+    println!("Running Autolabeling");
     let init_onnx = init_onnx_backend()?;
     let args = CliArguments::parse();
     let workers = match &args.workers {
@@ -100,7 +103,7 @@ fn main() -> Result<(), Error> {
             fs::create_dir_all(&front_sort_dir)?;
             fs::create_dir_all(&back_sort_dir)?;
         }
-        false => println!("not sorting"),
+        false => println!(""),
     };
     rayon::ThreadPoolBuilder::new()
         .num_threads(workers.unwrap().try_into().unwrap())
@@ -169,11 +172,12 @@ fn main() -> Result<(), Error> {
             todo!()
         }
     };
-    draw_dummy_graph();
+    // draw_dummy_graph();
     Ok(())
 }
 
-/// moves a image in the form of a &PathBuf to a dir provided as a string
+/// moves a image in the form of a 
+/// *&PathBuf* to a dir provided as a string
 fn move_to_sort_dir(image_path: &PathBuf, sorting_dir: &str) {
     let original_img_file = image_path.to_owned();
     let mut original_json_file = image_path.to_owned();

@@ -4,7 +4,6 @@ use crate::label::{LabelmeAnnotation, Shape, YoloAnnotation};
 use std::collections::HashMap;
 
 /// output formats functions traits
-///
 pub trait OutputFormat: Sized {
     fn to_yolo_vec(&self) -> Result<Vec<YoloAnnotation>, anyhow::Error>;
     fn to_yolo(&self) -> Result<YoloAnnotation, anyhow::Error>;
