@@ -302,7 +302,7 @@ impl OutputFormat for Embeddings {
             imageWidth: original_dimension.0.to_owned() as i64,
             imageHeight: original_dimension.1.to_owned() as i64,
             imageData: base64img,
-            // TODO: change to filename instead 
+            // TODO: change to filename instead
             // of the whole mf directory
             imagePath: String::from(filename),
         })

@@ -1,4 +1,3 @@
-mod splash;
 pub mod backends;
 pub mod fileutils;
 pub mod image_augmentations;
@@ -7,3 +6,4 @@ pub mod label;
 pub mod model;
 mod output;
 pub mod plotting;
+mod splash;

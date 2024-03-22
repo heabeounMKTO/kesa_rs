@@ -19,8 +19,6 @@ use std::{fs, path::PathBuf};
 
 use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
-
-
 #[derive(Parser, Debug)]
 struct CliArguments {
     #[arg(long)]
@@ -48,7 +46,7 @@ fn main() -> Result<(), Error> {
         Some(ref _string) => args.export,
         None => Some(String::from("export")),
     };
-    
+
     rayon::ThreadPoolBuilder::new()
         .num_threads(workers.unwrap().try_into().unwrap())
         .build_global()
@@ -60,9 +58,9 @@ fn main() -> Result<(), Error> {
     let mut spinner0 = Spinner::new(spinners::Hearts, "Creating export paths", Color::White);
     export_options.create_folders()?;
     spinner0.success("Created export paths");
-    
+
     let mut spinner = Spinner::new(
-        spinners::Hearts, 
+        spinners::Hearts,
         format!("Searching for .json files in {:?}", &args.folder),
         Color::White,
     );
@@ -95,8 +93,6 @@ fn main() -> Result<(), Error> {
     move_files(test_batch, &args.folder, &export_options, "test")?;
     Ok(())
 }
-
-
 
 fn convert_labelme2yolo(json: &PathBuf, class_hash: &HashMap<String, i64>) -> () {
     // de-serialize from file to struct
@@ -165,4 +161,3 @@ fn move_files(
     println!("files moving done!");
     Ok(())
 }
-

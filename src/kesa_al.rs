@@ -6,7 +6,6 @@ mod model;
 mod output;
 mod plotting;
 mod splash;
-use splash::print_splash;
 use crate::{
     backends::{
         candle_backend::CandleModel, compute_backends::InferenceModel, tch_backend::TchModel,
@@ -31,6 +30,7 @@ use ndarray::{s, ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use plotting::draw_dummy_graph;
 use rayon::prelude::*;
 use spinners::{Spinner, Spinners};
+use splash::print_splash;
 use std::fs::{self, File};
 use std::io::BufReader;
 use std::io::{Read, Write};
@@ -176,7 +176,7 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-/// moves a image in the form of a 
+/// moves a image in the form of a
 /// *&PathBuf* to a dir provided as a string
 fn move_to_sort_dir(image_path: &PathBuf, sorting_dir: &str) {
     let original_img_file = image_path.to_owned();
