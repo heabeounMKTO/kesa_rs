@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
-
+use std::path::PathBuf;
 /// struct for storing generic xyxy's
 /// for conversion between normalized
 /// and screen coordinates.
@@ -294,6 +294,7 @@ impl OutputFormat for Embeddings {
         let version: String = String::from("5.1.1");
         let flags: HashMap<String, String> = HashMap::new();
         let base64img: String = dynimg2string(image_file).unwrap();
+        println!("IMAGE_PATH : {:?}", PathBuf::from(&filename).file_name());
         Ok(LabelmeAnnotation {
             version,
             flags: Some(flags),
@@ -301,6 +302,8 @@ impl OutputFormat for Embeddings {
             imageWidth: original_dimension.0.to_owned() as i64,
             imageHeight: original_dimension.1.to_owned() as i64,
             imageData: base64img,
+            // TODO: change to filename instead 
+            // of the whole mf directory
             imagePath: String::from(filename),
         })
     }
