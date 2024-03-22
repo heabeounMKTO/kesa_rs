@@ -134,7 +134,7 @@ fn main() -> Result<(), Error> {
                                     &orig_img,
                                     &load_model.model_details.names,
                                 )
-                                    .unwrap();
+                                .unwrap();
                                 // move file if sort
                                 match &args.sort {
                                     true => {
@@ -203,7 +203,7 @@ fn process_results(
                 &original_image.dimensions(),
                 image_path.to_owned().as_str(),
                 &original_image,
-                &(*IMG_SIZE, *IMG_SIZE)
+                &(*IMG_SIZE, *IMG_SIZE),
             )?;
             write_labelme_to_json(&res_labelme, &img_pathbuf)?
         }

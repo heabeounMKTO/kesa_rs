@@ -1,13 +1,13 @@
 /* anything that's label related */
+use crate::image_utils::dynimg2string;
+use crate::output::OutputFormat;
 use anyhow::{Error, Result};
 use image::DynamicImage;
+use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
-use crate::image_utils::dynimg2string;
-use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
-use crate::output::OutputFormat;
 
 /// struct for storing generic xyxy's
 /// for conversion between normalized
@@ -20,7 +20,6 @@ pub struct Xyxy {
     pub x2: f32,
     pub y2: f32,
 }
-
 
 impl Xyxy {
     pub fn new(coordinate_type: CoordinateType, x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
@@ -119,7 +118,7 @@ impl OutputFormat for YoloAnnotation {
         &self,
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> std::result::Result<Vec<Shape>, anyhow::Error> {
         todo!()
     }
@@ -129,7 +128,7 @@ impl OutputFormat for YoloAnnotation {
         original_dimension: &(u32, u32),
         filename: &str,
         image_file: &DynamicImage,
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> std::result::Result<LabelmeAnnotation, anyhow::Error> {
         todo!()
     }
@@ -179,18 +178,15 @@ pub struct Shape {
     pub flags: HashMap<String, String>,
 }
 
-
-
 pub fn get_xyxy_from_shape(input_shape: &Shape, coordinate_type: CoordinateType) -> Xyxy {
     Xyxy {
-        coordinate_type, 
+        coordinate_type,
         x1: input_shape.points[0][0].to_owned(),
         y1: input_shape.points[0][1].to_owned(),
         x2: input_shape.points[1][0].to_owned(),
         y2: input_shape.points[1][1].to_owned(),
     }
 }
-
 
 /// TODO: SHAPE MASK  for segmentation tasks , unimplemnetd for now :|
 pub enum ShapeType {
@@ -203,7 +199,6 @@ pub enum CoordinateType {
     Screen,
     Normalized,
 }
-
 
 // not sure where to put these, just leaving it here for now :|
 #[derive(Debug, Clone)]
@@ -235,7 +230,7 @@ impl OutputFormat for Embeddings {
         &self,
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> Result<Vec<Shape>, Error> {
         let raw_output_vec = self.to_yolo_vec();
         let g_id = self.to_vec()?;
@@ -292,9 +287,10 @@ impl OutputFormat for Embeddings {
         original_dimension: &(u32, u32),
         filename: &str,
         image_file: &DynamicImage,
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> Result<LabelmeAnnotation, anyhow::Error> {
-        let all_shapes: Vec<Shape> = self.to_shape(all_classes, original_dimension, inference_dimension)?;
+        let all_shapes: Vec<Shape> =
+            self.to_shape(all_classes, original_dimension, inference_dimension)?;
         let version: String = String::from("5.1.1");
         let flags: HashMap<String, String> = HashMap::new();
         let base64img: String = dynimg2string(image_file).unwrap();
@@ -309,8 +305,6 @@ impl OutputFormat for Embeddings {
         })
     }
 }
-
-
 
 pub fn read_labels_from_file(filename: &str) -> Result<LabelmeAnnotation, Error> {
     let json_filename = fs::read_to_string(filename).expect("READ ERROR: cannot read jsonfile !");

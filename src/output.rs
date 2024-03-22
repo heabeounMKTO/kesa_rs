@@ -14,12 +14,12 @@ pub trait OutputFormat: Sized {
         original_dimension: &(u32, u32),
         filename: &str,
         image_file: &DynamicImage,
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> Result<LabelmeAnnotation, anyhow::Error>;
     fn to_shape(
         &self,
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
-        inference_dimension: &(u32, u32)
+        inference_dimension: &(u32, u32),
     ) -> Result<Vec<Shape>, anyhow::Error>;
 }

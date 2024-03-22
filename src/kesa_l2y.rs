@@ -35,12 +35,11 @@ struct CliArguments {
     export: Option<String>,
 }
 
-
 fn main() -> Result<(), Error> {
-   print_splash();
+    print_splash();
     let args = CliArguments::parse();
     let workers = match &args.workers {
         Some(ref _i64) => args.workers,
-        None => Some(4)
+        None => Some(4),
     };
 }

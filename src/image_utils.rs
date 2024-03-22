@@ -1,14 +1,14 @@
 use anyhow::{Error, Result};
-use image::io::Reader;
-use image::DynamicImage;
-use std::io::Cursor;
 use base64::{
     engine::{self, general_purpose},
     Engine as _,
 };
 use half::f16;
-use image::{imageops::FilterType,  GenericImageView, ImageBuffer, ImageFormat};
+use image::io::Reader;
+use image::DynamicImage;
+use image::{imageops::FilterType, GenericImageView, ImageBuffer, ImageFormat};
 use ndarray::{s, Array, ArrayBase, Axis, Dim, IxDyn, OwnedRepr};
+use std::io::Cursor;
 use std::path::Path;
 /// handles opening images ,
 /// avoids crashing
@@ -18,7 +18,6 @@ pub fn open_image(image_path: &str) -> Result<DynamicImage, Error> {
     let _open_image = image::open(image_path)?;
     Ok(_open_image)
 }
-
 
 /* stolen my own code
 * yet agian lmaooo */

@@ -1,14 +1,13 @@
-use crate::label::{LabelmeAnnotation,
-    read_labels_from_file, YoloAnnotation};
+use crate::label::{read_labels_from_file, LabelmeAnnotation, YoloAnnotation};
 use anyhow::{Error, Result};
-use image::DynamicImage; 
+use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self, Value};
 use std::collections::HashMap;
 use std::fs;
+use std::fs::read_dir;
 use std::io::Write;
 use std::path::PathBuf;
-use std::fs::read_dir;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatasetInfo {
@@ -83,7 +82,6 @@ impl ExportFolderOptions {
     }
 }
 
-
 /// get all images in a folder
 pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
     read_dir(input_folder)
@@ -96,7 +94,6 @@ pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
         .map(|f| f.path())
         .collect()
 }
-
 
 pub fn get_all_jsons(input: &str) -> Result<Vec<PathBuf>, Error> {
     let all_jsons: Vec<PathBuf> = fs::read_dir(&input)
@@ -207,11 +204,8 @@ pub fn write_labelme_to_json(
     Ok(())
 }
 
-
-
 /// handles errors in case the image is corrupted
 pub fn open_image(input_path: &PathBuf) -> Result<DynamicImage, Error> {
     let img = image::open(input_path)?;
     Ok(img)
 }
-
