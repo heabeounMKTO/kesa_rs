@@ -181,7 +181,7 @@ pub struct Shape {
 
 pub fn get_xyxy_from_shape(input_shape: &Shape, coordinate_type: CoordinateType) -> Xyxy {
     Xyxy {
-        coordinate_type: coordinate_type, 
+        coordinate_type, 
         x1: input_shape.points[0][0].to_owned(),
         y1: input_shape.points[0][1].to_owned(),
         x2: input_shape.points[1][0].to_owned(),
