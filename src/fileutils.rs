@@ -1,11 +1,14 @@
-use crate::label::{read_labels_from_file, YoloAnnotation};
+use crate::label::{LabelmeAnnotation,
+    read_labels_from_file, YoloAnnotation};
 use anyhow::{Error, Result};
+use image::DynamicImage; 
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+use std::fs::read_dir;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatasetInfo {
@@ -80,6 +83,21 @@ impl ExportFolderOptions {
     }
 }
 
+
+/// get all images in a folder
+pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
+    read_dir(input_folder)
+        .unwrap()
+        .filter_map(|f| f.ok())
+        .filter(|f| match f.path().extension() {
+            None => false,
+            Some(ex) => ex == "jpeg" || ex == "jpg" || ex == "png",
+        })
+        .map(|f| f.path())
+        .collect()
+}
+
+
 pub fn get_all_jsons(input: &str) -> Result<Vec<PathBuf>, Error> {
     let all_jsons: Vec<PathBuf> = fs::read_dir(&input)
         .unwrap()
@@ -116,10 +134,13 @@ pub fn get_all_classes(input: &Vec<PathBuf>) -> Result<Vec<String>, Error> {
     Ok(label_list)
 }
 
-/// writes to txt
-pub fn write_yolo_txt(input_yolo: Vec<YoloAnnotation>, file_path: &PathBuf) -> Result<(), Error> {
+/// what part of `write_yolo_to_txt` do u not understand bro :|
+pub fn write_yolo_to_txt(
+    input_yolo: Vec<YoloAnnotation>,
+    image_path: &PathBuf,
+) -> Result<(), Error> {
     // println!("pathbuf: {:?}", file_path);
-    let mut _txt_file_name = file_path.to_owned();
+    let mut _txt_file_name = image_path.to_owned();
     _txt_file_name.set_extension("txt");
     let mut txtfile = fs::File::create(&_txt_file_name).expect("cannot create file!");
     for shape in input_yolo.iter() {
@@ -142,6 +163,19 @@ pub fn write_yolo_txt(input_yolo: Vec<YoloAnnotation>, file_path: &PathBuf) -> R
     }
     Ok(())
 }
+/// get all images in a folder
+
+pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
+    read_dir(input_folder)
+        .unwrap()
+        .filter_map(|f| f.ok())
+        .filter(|f| match f.path().extension() {
+            None => false,
+            Some(ex) => ex == "jpeg" || ex == "jpg" || ex == "png",
+        })
+        .map(|f| f.path())
+        .collect()
+}
 
 pub fn write_data_yaml(
     export_options: &ExportFolderOptions,
@@ -154,3 +188,24 @@ pub fn write_data_yaml(
     // println!("YAML DIR: {:?}", export_options.export_folder.to_owned().join("data.yaml"));
     Ok(())
 }
+
+pub fn write_labelme_to_json(
+    input_labelme: &LabelmeAnnotation,
+    image_path: &PathBuf,
+) -> Result<(), Error> {
+    let mut json_fname = image_path.to_owned();
+    json_fname.set_extension("json");
+    let mut _json_output = fs::File::create(json_fname).unwrap();
+    serde_json::to_writer(&mut _json_output, input_labelme).expect("unable to write to jsonfile !");
+    // println!("yolo arrays: {:#?}", input_labelme);
+    Ok(())
+}
+
+
+
+/// handles errors in case the image is corrupted
+pub fn open_image(input_path: &PathBuf) -> Result<DynamicImage, Error> {
+    let img = image::open(input_path)?;
+    Ok(img)
+}
+

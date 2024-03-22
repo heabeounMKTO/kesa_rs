@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
+use crate::image_utils::dynimg2string;
 use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use crate::output::OutputFormat;
-use crate::kesa_al::IMG_SIZE;
 
 /// struct for storing generic xyxy's
 /// for conversion between normalized
@@ -119,6 +119,7 @@ impl OutputFormat for YoloAnnotation {
         &self,
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
+        inference_dimension: &(u32, u32)
     ) -> std::result::Result<Vec<Shape>, anyhow::Error> {
         todo!()
     }
@@ -128,6 +129,7 @@ impl OutputFormat for YoloAnnotation {
         original_dimension: &(u32, u32),
         filename: &str,
         image_file: &DynamicImage,
+        inference_dimension: &(u32, u32)
     ) -> std::result::Result<LabelmeAnnotation, anyhow::Error> {
         todo!()
     }
@@ -233,6 +235,7 @@ impl OutputFormat for Embeddings {
         &self,
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
+        inference_dimension: &(u32, u32)
     ) -> Result<Vec<Shape>, Error> {
         let raw_output_vec = self.to_yolo_vec();
         let g_id = self.to_vec()?;
@@ -247,7 +250,7 @@ impl OutputFormat for Embeddings {
                 let class_index = elem.class as usize;
                 let class_name = all_classes[class_index].to_owned();
                 let xy_coords: Vec<Vec<f32>> = Xyxy::from_yolo(&elem)?
-                    .to_normalized(&(*IMG_SIZE, *IMG_SIZE))?
+                    .to_normalized(inference_dimension)?
                     .to_screen(original_dimension)?
                     .points();
                 let _shape = Shape {
@@ -289,8 +292,9 @@ impl OutputFormat for Embeddings {
         original_dimension: &(u32, u32),
         filename: &str,
         image_file: &DynamicImage,
+        inference_dimension: &(u32, u32)
     ) -> Result<LabelmeAnnotation, anyhow::Error> {
-        let all_shapes: Vec<Shape> = self.to_shape(all_classes, original_dimension)?;
+        let all_shapes: Vec<Shape> = self.to_shape(all_classes, original_dimension, inference_dimension)?;
         let version: String = String::from("5.1.1");
         let flags: HashMap<String, String> = HashMap::new();
         let base64img: String = dynimg2string(image_file).unwrap();

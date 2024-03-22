@@ -4,6 +4,7 @@ mod image_utils;
 mod label;
 mod model;
 mod output;
+mod plotting;
 
 use crate::{
     backends::{
@@ -23,7 +24,7 @@ use clap::{ArgAction, Parser};
 use fileutils::{open_image, write_yolo_to_txt};
 use image::{DynamicImage, GenericImageView};
 use indicatif::ProgressBar;
-use labels::{Embeddings, Shape, YoloAnnotation};
+use label::{Embeddings, Shape, YoloAnnotation};
 use lazy_static::lazy_static;
 use ndarray::{s, ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use plotting::draw_dummy_graph;
@@ -202,6 +203,7 @@ fn process_results(
                 &original_image.dimensions(),
                 image_path.to_owned().as_str(),
                 &original_image,
+                &(*IMG_SIZE, *IMG_SIZE)
             )?;
             write_labelme_to_json(&res_labelme, &img_pathbuf)?
         }
