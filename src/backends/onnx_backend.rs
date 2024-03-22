@@ -1,6 +1,6 @@
 use crate::fileutils::get_config_from_name;
-use crate::imgutils;
-use crate::labels::Embeddings;
+use crate::image_utils;
+use crate::label::Embeddings;
 use crate::model::DatasetInfo;
 use anyhow::{Error, Result};
 use image::DynamicImage;
@@ -44,7 +44,7 @@ impl InferenceModel for OnnxModel {
         if self.is_fp16 {
             todo!()
         } else {
-            let _input_img = imgutils::preprocess_imagef32(&input_image, 640)?;
+            let _input_img = image_utils::preprocess_imagef32(&input_image, 640)?;
             let _inference: Result<SessionOutputs, ort::Error> =
                 self.model.run(inputs!["images" => _input_img.view()]?);
             let _embeddings: Embeddings = match _inference {
@@ -100,7 +100,7 @@ impl<'a> OnnxInference<'a> {
             todo!()
         } else {
             // TODO: dynamically get image size from config or filename?! , 640 for now amen.
-            let _input_img = imgutils::preprocess_imagef32(&self.input_image, 640)?;
+            let _input_img = image_utils::preprocess_imagef32(&self.input_image, 640)?;
             let _inference: Result<SessionOutputs, ort::Error> =
                 self.onnx.model.run(inputs!["images" => _input_img.view()]?);
             let _embeddings: Embeddings = match _inference {

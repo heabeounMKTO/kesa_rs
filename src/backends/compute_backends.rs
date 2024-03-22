@@ -2,7 +2,7 @@ use anyhow::{Error, Result};
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-use crate::labels::Embeddings;
+use crate::label::Embeddings;
 
 use super::candle_backend::CandleModel;
 use super::onnx_backend::OnnxModel;

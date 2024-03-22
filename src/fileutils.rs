@@ -163,18 +163,24 @@ pub fn write_yolo_to_txt(
     }
     Ok(())
 }
-/// get all images in a folder
 
-pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
-    read_dir(input_folder)
-        .unwrap()
-        .filter_map(|f| f.ok())
-        .filter(|f| match f.path().extension() {
-            None => false,
-            Some(ex) => ex == "jpeg" || ex == "jpg" || ex == "png",
-        })
-        .map(|f| f.path())
-        .collect()
+/// get config from filename
+pub fn get_config_from_name(
+    config_path: &Option<&str>,
+    model_path: &str,
+) -> Result<PathBuf, Error> {
+    // find model configuration
+    let model_yaml_config_path = match config_path {
+        Some(config_path) => PathBuf::from(config_path),
+        // if none is supplied try to load from
+        // file of the same name
+        None => {
+            let mut _cfg_path = PathBuf::from(model_path);
+            _cfg_path.set_extension("yaml");
+            _cfg_path
+        }
+    };
+    Ok(model_yaml_config_path)
 }
 
 pub fn write_data_yaml(
