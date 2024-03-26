@@ -24,11 +24,12 @@ plotters = "0.3.5"
 rand = "0.8.5"
 ndarray = "0.15.6"
 tch = "0.15.0"
-image = "0.25.0"
+image = { version = "0.25.0", features = ["jpeg"] }
 rayon = "1.9.0"
 half = "2.4.0"
 spinoff = "0.8.0"
 spinners = "4.1.1"
+
 
 [lib]
 name = "kesa"
