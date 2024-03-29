@@ -173,6 +173,10 @@ impl LabelmeAnnotation {
         } 
         Ok(all_xyxys)
     } 
+    
+    pub fn update_shapes(&mut self) {
+       todo!() 
+    }
 
 
     /// converts labelme annotation to yolo shape
@@ -196,8 +200,12 @@ impl LabelmeAnnotation {
         }
         Ok(yolo_label_list)
     }
+    
+
 }
 
+
+/// parsed directrly from the json file eh
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shape {
     pub label: String,
@@ -206,6 +214,15 @@ pub struct Shape {
     pub shape_type: String,
     pub flags: HashMap<String, String>,
 }
+
+impl Shape {
+    pub fn update_points_from_xyxy(&mut self, new_xyxy: Xyxy) {
+        let x1y1 = vec![new_xyxy.x1, new_xyxy.y1];
+        let x2y2 = vec![new_xyxy.x2, new_xyxy.y2];
+        self.points = vec![x1y1, x2y2];
+    }
+}
+
 
 pub fn get_xyxy_from_shape(input_shape: &Shape, coordinate_type: CoordinateType) -> Xyxy {
     Xyxy {
