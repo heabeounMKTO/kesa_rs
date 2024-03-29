@@ -31,6 +31,16 @@ impl Xyxy {
             y2,
         }
     }
+
+    /// get center coordinates/values 
+    /// it is mapped as [x, y]
+    pub fn get_center_xy(&self) -> Vec<f32> {
+        vec![
+            ((self.x1+self.x2) / 2.0), 
+            ((self.y1+self.y2) / 2.0) 
+        ]
+    }
+
     /// coordinates from yolo
     pub fn from_yolo(input_yolo: &YoloAnnotation) -> Result<Self, Error> {
         Ok(Xyxy {
@@ -145,7 +155,26 @@ pub struct LabelmeAnnotation {
     pub imageHeight: i64,
 }
 
+
 impl LabelmeAnnotation {
+    pub fn get_xyxy(&self) -> Result<Vec<Xyxy>, Error> {
+        let mut all_xyxys: Vec<Xyxy> = vec![];
+        for shape in self.shapes.iter() {
+            all_xyxys.push(
+            Xyxy::new(
+                CoordinateType::Screen,
+                shape.points[0][0],
+                shape.points[0][1],
+                shape.points[1][0],
+                shape.points[1][1]
+                )
+            );
+
+        } 
+        Ok(all_xyxys)
+    } 
+
+
     /// converts labelme annotation to yolo shape
     pub fn to_yolo(&self, class_hash: &HashMap<String, i64>) -> Result<Vec<YoloAnnotation>, Error> {
         let mut yolo_label_list: Vec<YoloAnnotation> = vec![];
