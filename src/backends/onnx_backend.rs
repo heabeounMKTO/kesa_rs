@@ -52,7 +52,7 @@ impl InferenceModel for OnnxModel {
                     // TODO: change "output" => "output0" for yolov9
                     // or maybe just export with the output being output
                     let _arr = result["output"]
-                        .extract_tensor::<f32>()?
+                        .try_extract_tensor::<f32>()?
                         .view()
                         .t()
                         .into_owned();
@@ -106,7 +106,7 @@ impl<'a> OnnxInference<'a> {
             let _embeddings: Embeddings = match _inference {
                 Ok(result) => {
                     let _arr = result["output"]
-                        .extract_tensor::<f32>()?
+                        .try_extract_tensor::<f32>()?
                         .view()
                         .t()
                         .into_owned();
@@ -160,7 +160,7 @@ pub fn load_onnx_model(
     // why are we here? just to suffer?
     let model: ort::Session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
-        .with_model_from_file(&model_path)
+        .commit_from_file(&model_path)        
         .unwrap();
     let model_yaml_config_path = get_config_from_name(&config_path, &model_path)
         .expect("Cannot Find model Configuration file");
