@@ -12,6 +12,7 @@ use image::DynamicImage;
 use image_augmentations::augmentations::{AugmentationType, ImageAugmentation};
 use indicatif::ProgressBar;
 use label::{read_labels_from_file, LabelmeAnnotation};
+use rand::distributions::{Distribution, Uniform};
 use rayon::prelude::*;
 use spinoff::{spinners, Color, Spinner};
 use splash::print_splash;
@@ -41,7 +42,7 @@ struct CliArguments {
     #[arg(long)]
     /// image variations to create  
     /// by default is 5 times
-    variations: i32 
+    variations: i32,
 }
 
 fn main() -> Result<(), Error> {
@@ -75,18 +76,21 @@ fn main() -> Result<(), Error> {
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
         for _ in 0..(args.variations) {
-            // idk how can this cause a panic ok 
+
             let do_aug = get_random_aug().unwrap();
 
             // FUCK THEM <<RESULT>> HANDLING KIDS
-        create_augmentations(do_aug, &file, &classes_hash, &export_format, &args.folder);
+            create_augmentation(do_aug, &file, &classes_hash, &export_format, &args.folder);
+
         }
     });
     prog.finish_with_message("created augmentations!\n");
     Ok(())
 }
 
-fn create_augmentations(
+
+fn create_augmentation(
+
     aug_type: AugmentationType,
     json_path: &PathBuf,
     class_hash: &HashMap<String, i64>,
@@ -103,57 +107,56 @@ fn create_augmentations(
     match &aug_type {
         AugmentationType::FlipVeritcal => {
             aug.flip_v();
-        },
+
+        }
         AugmentationType::FlipHorizontal => {
             aug.flip_h();
-        },
+        }
         AugmentationType::RandomBrightness => {
-            aug.random_brightness((-100,100));
-        },
+            aug.random_brightness((-100, 100));
+        }
         AugmentationType::UnSharpen => {
             aug.unsharpen(10.0, 2);
-        },
+        }
         AugmentationType::HueRotate30 => {
             aug.huerotate(30);
-        },
+        }
         AugmentationType::HueRotate60 => {
             aug.huerotate(60);
-        }, 
+        }
         AugmentationType::HueRotate90 => {
             aug.huerotate(90);
-        },
+        }
         AugmentationType::HueRotate120 => {
             aug.huerotate(120);
-        },
+        }
         AugmentationType::HueRotate180 => {
             aug.huerotate(180);
-        },
+        }
         AugmentationType::HueRotate210 => {
             aug.huerotate(210);
-        },
+        }
         AugmentationType::HueRotate270 => {
             aug.huerotate(270);
-        },
+        }
         AugmentationType::Grayscale => {
             aug.grayscale();
         }
-
     }
     aug.write_annotations(&PathBuf::from(export_folder), class_hash)?;
     Ok(())
 }
 
 
-
 fn get_random_aug() -> Result<AugmentationType, Error> {
-   let mut rng = rand::thread_rng();
-   // get random number that 
-   // corresponds toa  augmentation type
-   let aug_t = Uniform::from(0..12).sample(&mut rng);
-   let do_aug = match aug_t {
+    let mut rng = rand::thread_rng();
+    // get random number that
+    // corresponds toa  augmentation type
+    let aug_t = Uniform::from(0..12).sample(&mut rng);
+    let do_aug = match aug_t {
         0 => AugmentationType::FlipHorizontal,
         1 => AugmentationType::FlipVeritcal,
-        2 => AugmentationType::RandomBrightness, 
+        2 => AugmentationType::RandomBrightness,
         3 => AugmentationType::UnSharpen,
         4 => AugmentationType::HueRotate30,
         5 => AugmentationType::HueRotate60,
@@ -163,7 +166,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
         9 => AugmentationType::HueRotate210,
         10 => AugmentationType::HueRotate270,
         11 => AugmentationType::Grayscale,
-        _ => panic!("unknown augmentation type!") 
+        _ => panic!("unknown augmentation type!"),
     };
     Ok(do_aug)
 }
