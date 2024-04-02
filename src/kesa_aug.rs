@@ -88,7 +88,7 @@ fn create_augmentations(
 
     aug.flip_v();
     aug.flip_h();
-    aug.flip_v();
+    aug.random_brightness((-100, 100));
     aug.write_annotations(&PathBuf::from(export_folder), class_hash)?;
     Ok(())
 }

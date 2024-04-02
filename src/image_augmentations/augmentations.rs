@@ -82,7 +82,6 @@ impl ImageAugmentation {
             // subtract y coord by height and mult by -1
             shape.points[0][1] = (shape.points[0][1] - (self.image.dimensions().1 as f32)) * -1.0;
             shape.points[1][1] = (shape.points[1][1] - (self.image.dimensions().1 as f32)) * -1.0;
-            println!("shape: {:?}", &shape);
         }
     }
 
@@ -93,7 +92,7 @@ impl ImageAugmentation {
     /// subtract y coordinates by image height then
     /// multiplies the coords by [[-1 , 1], [-1 , 1]]
     /// to flip along the x axis
-    /// ````
+    /// ```
     pub fn flip_h(&mut self) {
         let flipped_h_image = imageops::flip_horizontal(&self.image);
         self.image = DynamicImage::ImageRgba8(flipped_h_image);
@@ -102,7 +101,6 @@ impl ImageAugmentation {
             // we dont use ndarrays here sir
             shape.points[0][0] = (shape.points[0][0] - (self.image.dimensions().0 as f32)) * -1.0;
             shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * -1.0;
-            println!("shape: {:?}", &shape);
         }
     }
 }
