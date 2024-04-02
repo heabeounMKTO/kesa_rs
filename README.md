@@ -24,6 +24,7 @@ cargo build --release
 # what does kesa binaries do
 ## kesa_al
 labels images in a folder using yolo models exported in onnx format
+(currently only works with yolov7 models , but patch for v9 is coming s00n)
 
 ## kesa_aug
 creates variations from labeled images
