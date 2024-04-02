@@ -25,7 +25,8 @@ pub enum AugmentationType {
     HueRotate120,
     HueRotate180,
     HueRotate210,
-    HueRotate270
+    HueRotate270,
+    Grayscale
 }
 
 #[derive(Debug)]
@@ -70,6 +71,13 @@ impl ImageAugmentation {
         }
     }
     
+    pub fn grayscale(&mut self) {
+        let _gscale = colorops::grayscale_alpha(&self.image);
+        
+        self.image = DynamicImage::ImageLumaA8(_gscale);
+    }
+
+
     pub fn huerotate(&mut self, rotate_degree: i32) {
         let _hrotate = colorops::huerotate(&self.image, rotate_degree);
         
