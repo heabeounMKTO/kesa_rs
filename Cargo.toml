@@ -31,7 +31,6 @@ spinoff = "0.8.0"
 spinners = "4.1.1"
 uuid = { version = "1.8.0", features = ["v4"] }
 
-
 [lib]
 name = "kesa"
 path = "src/lib.rs"

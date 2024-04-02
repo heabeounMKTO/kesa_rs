@@ -18,7 +18,6 @@ use spinoff::{spinners, Color, Spinner};
 use splash::print_splash;
 use std::collections::HashMap;
 use std::{fs, path::PathBuf};
-use rand::distributions::{Uniform, Distribution};
 
 use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
@@ -76,21 +75,18 @@ fn main() -> Result<(), Error> {
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
         for _ in 0..(args.variations) {
-
+            // idk how can this cause a panic ok
             let do_aug = get_random_aug().unwrap();
 
             // FUCK THEM <<RESULT>> HANDLING KIDS
             create_augmentation(do_aug, &file, &classes_hash, &export_format, &args.folder);
-
         }
     });
     prog.finish_with_message("created augmentations!\n");
     Ok(())
 }
 
-
 fn create_augmentation(
-
     aug_type: AugmentationType,
     json_path: &PathBuf,
     class_hash: &HashMap<String, i64>,
@@ -107,7 +103,6 @@ fn create_augmentation(
     match &aug_type {
         AugmentationType::FlipVeritcal => {
             aug.flip_v();
-
         }
         AugmentationType::FlipHorizontal => {
             aug.flip_h();
@@ -146,7 +141,6 @@ fn create_augmentation(
     aug.write_annotations(&PathBuf::from(export_folder), class_hash)?;
     Ok(())
 }
-
 
 fn get_random_aug() -> Result<AugmentationType, Error> {
     let mut rng = rand::thread_rng();
