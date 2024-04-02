@@ -82,9 +82,18 @@ fn main() -> Result<(), Error> {
         prog.inc(1);
         for _ in 0..(aug_times.unwrap()) {
            let mut rng = rand::thread_rng();
-           let aug_t = Uniform::from(0..4);
-           println!("aug_type {:?}", &aug_t.sample(&mut rng));
-        create_augmentations( AugmentationType::FlipVeritcal, &file, &classes_hash, &export_format, &args.folder);
+           // get random number that 
+           // corresponds toa  augmentation type
+           let aug_t = Uniform::from(0..4).sample(&mut rng);
+           let do_aug = match aug_t {
+                0 => AugmentationType::FlipHorizontal,
+                1 => AugmentationType::FlipVeritcal,
+                2 => AugmentationType::RandomBrightness, 
+                3 => AugmentationType::UnSharpen,
+                _ => todo!()
+            };
+           println!("aug_type {:?}", &do_aug);
+        create_augmentations( do_aug, &file, &classes_hash, &export_format, &args.folder);
         }
         // fuck handing <Result>
     });
