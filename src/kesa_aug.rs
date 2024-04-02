@@ -17,6 +17,7 @@ use spinoff::{spinners, Color, Spinner};
 use splash::print_splash;
 use std::collections::HashMap;
 use std::{fs, path::PathBuf};
+use rand::distributions::{Uniform, Distribution};
 
 use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
@@ -34,12 +35,25 @@ struct CliArguments {
 
     #[arg(long)]
     /// export format , labelme or yolo?!
+    /// by default is labelme
     format: Option<String>,
+
+    #[arg(long)]
+    /// times to augment the image
+    /// by default is 5 times
+    times: Option<i32>
 }
 
 fn main() -> Result<(), Error> {
     print_splash();
     let args = CliArguments::parse();
+
+
+    let aug_times = match &args.times {
+       Some(ref _i64) => args.workers,
+       None => Some(5)
+    };
+
     let workers = match &args.workers {
         Some(ref _i64) => args.workers,
         None => Some(4),
@@ -63,20 +77,28 @@ fn main() -> Result<(), Error> {
     let classes_hash = get_all_classes_hash(&all_classes)?;
     spinner0.success(format!("found {:?} json files", &all_json.len()).as_str());
     let prog = ProgressBar::new(all_json.len().to_owned() as u64);
+
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
+        for _ in 0..(aug_times.unwrap()) {
+           let mut rng = rand::thread_rng();
+           let aug_t = Uniform::from(0..4);
+           println!("aug_type {:?}", &aug_t.sample(&mut rng));
+        create_augmentations( AugmentationType::FlipVeritcal, &file, &classes_hash, &export_format, &args.folder);
+        }
         // fuck handing <Result>
-        create_augmentations(&file, &classes_hash, &export_format, &args.folder);
     });
     prog.finish_with_message("created augmentations!\n");
     Ok(())
 }
 
 fn create_augmentations(
+    aug_type: AugmentationType,
     json_path: &PathBuf,
     class_hash: &HashMap<String, i64>,
     export_format: &str,
     export_folder: &str,
+    
 ) -> Result<(), Error> {
     let label = read_labels_from_file(json_path.to_str().unwrap())?;
     let img = open_image(&PathBuf::from(&label.imagePath))?;
@@ -85,10 +107,20 @@ fn create_augmentations(
         image: img,
         coords: label,
     };
-
-    aug.flip_v();
-    aug.flip_h();
-    aug.random_brightness((-100, 100));
+    match &aug_type {
+        AugmentationType::FlipVeritcal => {
+            aug.flip_v();
+        },
+        AugmentationType::FlipHorizontal => {
+            aug.flip_h();
+        },
+        AugmentationType::RandomBrightness => {
+            aug.random_brightness((-100,100));
+        },
+        AugmentationType::UnSharpen => {
+            aug.unsharpen(10.0, 2);
+        }
+    }
     aug.write_annotations(&PathBuf::from(export_folder), class_hash)?;
     Ok(())
 }

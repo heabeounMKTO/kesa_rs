@@ -17,6 +17,7 @@ pub enum AugmentationType {
     FlipHorizontal,
     FlipVeritcal,
     RandomBrightness,
+    UnSharpen
 }
 
 #[derive(Debug)]
@@ -59,6 +60,11 @@ impl ImageAugmentation {
         }
     }
 
+    pub fn unsharpen(&mut self, sigma: f32, threshold: i32) {
+        todo!()
+    }
+
+
     /// adds random amount of brightness in a given range
     /// negative values subtract brightness
     pub fn random_brightness(&mut self, range: (i32, i32)) {
@@ -70,7 +76,7 @@ impl ImageAugmentation {
     /// flips an image and it's annotation
     /// vertically , or "along the y axis ☝️🤓"
     /// for u nerds out there
-    /// ```
+    /// ```text
     /// subtracts y coordinates by image height then
     /// multiplies the coords by `[[1 , -1], [1 , -1]]`
     /// to flip along the y axis
@@ -88,7 +94,7 @@ impl ImageAugmentation {
     /// flips an image and it's annotation
     /// horizontally , or "along the x axis ☝️🤓"
     /// for u nerds out there
-    /// ```
+    /// ```text
     /// subtract y coordinates by image height then
     /// multiplies the coords by [[-1 , 1], [-1 , 1]]
     /// to flip along the x axis
