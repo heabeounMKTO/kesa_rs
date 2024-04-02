@@ -31,6 +31,8 @@ pub fn main() -> Result<(), Error>{
         coords: read_annotations 
     };
     aug.flip_v();
+    aug.flip_h();
+    aug.random_brightness((-100, 100));
     aug.write_annotations(&PathBuf::from("test"), &all_classes_hash);
     // let flip_v = imageops::flip_horizontal(&read_img);
     // read_img.save("test/test2_save.jpeg")?;

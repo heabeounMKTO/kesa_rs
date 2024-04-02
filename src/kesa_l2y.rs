@@ -24,10 +24,6 @@ struct CliArguments {
     #[arg(long)]
     folder: String,
 
-    #[arg(long, use_value_delimiter = true, value_delimiter = ',')]
-    augment: Option<Vec<String>>,
-    /// TODO: augment struct that takes kwargs** (idk what it's called)
-
     #[arg(long)]
     workers: Option<i64>,
 
@@ -104,6 +100,7 @@ fn convert_labelme2yolo(json: &PathBuf, class_hash: &HashMap<String, i64>) -> ()
     let _write = write_yolo_to_txt(all_yolo, &json);
 }
 
+
 fn move_files(
     input_array: Vec<PathBuf>,
     orig_path: &str,
@@ -131,8 +128,6 @@ fn move_files(
                 );
                 let dest_label = PathBuf::from(&export_options.train_label)
                     .join(orig_txt_file.file_name().to_owned().unwrap());
-                // println!("orig img: {:?} , orig label: {:?}", &orig_image_file, &orig_txt_file);
-                // println!("dest img: {:?} , dest label: {:?}", &dest_image, &dest_label);
                 fs::rename(orig_image_file, dest_image)?;
                 fs::rename(orig_txt_file, dest_label)?;
             }

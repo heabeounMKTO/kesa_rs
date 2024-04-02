@@ -47,7 +47,8 @@ impl ImageAugmentation {
         write_yolo_to_txt(yolo_anno, &img_path)?;
         Ok(())
     }
-
+    
+    /// what do u want me to explain 😠
     pub fn new(image: DynamicImage, coords: LabelmeAnnotation) -> ImageAugmentation {
          ImageAugmentation { image:  image, coords: coords }        
     }
@@ -63,9 +64,11 @@ impl ImageAugmentation {
     /// flips an image and it's annotation 
     /// vertically , or "along the y axis ☝️🤓" 
     /// for u nerds out there
-    /// subtract y coordinates by image height then 
+    /// ```
+    /// subtracts y coordinates by image height then 
     /// multiplies the coords by `[[1 , -1], [1 , -1]]`
     /// to flip along the y axis
+    /// ````
     pub fn flip_v(&mut self) {
        let flipped_v_image = imageops::flip_vertical(&self.image); 
        self.image = DynamicImage::ImageRgba8(flipped_v_image);
@@ -82,9 +85,11 @@ impl ImageAugmentation {
     /// flips an image and it's annotation 
     /// horizontally , or "along the x axis ☝️🤓" 
     /// for u nerds out there
+    /// ```
     /// subtract y coordinates by image height then 
     /// multiplies the coords by [[-1 , 1], [-1 , 1]]
     /// to flip along the x axis
+    /// ````
     pub fn flip_h(&mut self) {
        let flipped_h_image = imageops::flip_horizontal(&self.image); 
        self.image = DynamicImage::ImageRgba8(flipped_h_image);

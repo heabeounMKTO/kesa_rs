@@ -31,11 +31,9 @@ spinoff = "0.8.0"
 spinners = "4.1.1"
 uuid = { version = "1.8.0", features = ["v4"] }
 
-
 [lib]
 name = "kesa"
 path = "src/lib.rs"
-
 
 [[bin]]
 name = "kesa_al"
@@ -45,6 +43,9 @@ path = "src/kesa_al.rs"
 name = "kesa_l2y"
 path = "src/kesa_l2y.rs"
 
+[[bin]]
+name = "kesa_aug"
+path = "src/kesa_aug.rs"
 
 [profile.release]
 opt-level = "z"
