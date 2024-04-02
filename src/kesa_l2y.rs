@@ -24,10 +24,6 @@ struct CliArguments {
     #[arg(long)]
     folder: String,
 
-    #[arg(long, use_value_delimiter = true, value_delimiter = ',')]
-    augment: Option<Vec<String>>,
-    /// TODO: augment struct that takes kwargs** (idk what it's called)
-
     #[arg(long)]
     workers: Option<i64>,
 
@@ -120,9 +116,6 @@ fn move_files(
         // use imagePath from labelme so we dont have to do some png jpeg and jpg lookup bullshit
         let orig_image_file =
             PathBuf::from(format!("{}/{}", &orig_path, &read_json_file.imagePath));
-
-        // println!("txt: {:?} , img: {:?}", &orig_txt_file, &orig_image_file);
-
         match batch {
             "train" => {
                 let dest_image = format!(
@@ -131,8 +124,6 @@ fn move_files(
                 );
                 let dest_label = PathBuf::from(&export_options.train_label)
                     .join(orig_txt_file.file_name().to_owned().unwrap());
-                // println!("orig img: {:?} , orig label: {:?}", &orig_image_file, &orig_txt_file);
-                // println!("dest img: {:?} , dest label: {:?}", &dest_image, &dest_label);
                 fs::rename(orig_image_file, dest_image)?;
                 fs::rename(orig_txt_file, dest_label)?;
             }

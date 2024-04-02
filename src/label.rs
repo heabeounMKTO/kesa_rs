@@ -32,13 +32,10 @@ impl Xyxy {
         }
     }
 
-    /// get center coordinates/values 
+    /// get center coordinates/values
     /// it is mapped as [x, y]
     pub fn get_center_xy(&self) -> Vec<f32> {
-        vec![
-            ((self.x1+self.x2) / 2.0), 
-            ((self.y1+self.y2) / 2.0) 
-        ]
+        vec![((self.x1 + self.x2) / 2.0), ((self.y1 + self.y2) / 2.0)]
     }
 
     /// coordinates from yolo
@@ -155,29 +152,24 @@ pub struct LabelmeAnnotation {
     pub imageHeight: i64,
 }
 
-
 impl LabelmeAnnotation {
     pub fn get_xyxy(&self) -> Result<Vec<Xyxy>, Error> {
         let mut all_xyxys: Vec<Xyxy> = vec![];
         for shape in self.shapes.iter() {
-            all_xyxys.push(
-            Xyxy::new(
+            all_xyxys.push(Xyxy::new(
                 CoordinateType::Screen,
                 shape.points[0][0],
                 shape.points[0][1],
                 shape.points[1][0],
-                shape.points[1][1]
-                )
-            );
-
-        } 
+                shape.points[1][1],
+            ));
+        }
         Ok(all_xyxys)
-    } 
-    
-    pub fn update_shapes(&mut self) {
-       todo!() 
     }
 
+    pub fn update_shapes(&mut self) {
+        todo!()
+    }
 
     /// converts labelme annotation to yolo shape
     pub fn to_yolo(&self, class_hash: &HashMap<String, i64>) -> Result<Vec<YoloAnnotation>, Error> {
@@ -200,10 +192,7 @@ impl LabelmeAnnotation {
         }
         Ok(yolo_label_list)
     }
-    
-
 }
-
 
 /// parsed directrly from the json file eh
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -222,7 +211,6 @@ impl Shape {
         self.points = vec![x1y1, x2y2];
     }
 }
-
 
 pub fn get_xyxy_from_shape(input_shape: &Shape, coordinate_type: CoordinateType) -> Xyxy {
     Xyxy {

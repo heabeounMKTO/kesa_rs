@@ -84,11 +84,24 @@ pub fn preprocess_imagef32(
 // }
 //
 
+/// TODO:
+/// temporary function, will refactor
+/// dyn2string to do match() instead
+pub fn dynimg2string_png(input_image: &DynamicImage) -> Result<String, Error> {
+    let mut image_data: Vec<u8> = Vec::new();
+    input_image
+        .write_to(&mut Cursor::new(&mut image_data), ImageFormat::Png)
+        ?;
+    let resb64 = general_purpose::STANDARD.encode(image_data);
+    Ok(resb64)
+}
+
+
 pub fn dynimg2string(input_image: &DynamicImage) -> Result<String, Error> {
     let mut image_data: Vec<u8> = Vec::new();
     input_image
         .write_to(&mut Cursor::new(&mut image_data), ImageFormat::Jpeg)
-        .unwrap();
+        ?;
     let resb64 = general_purpose::STANDARD.encode(image_data);
     Ok(resb64)
 }
