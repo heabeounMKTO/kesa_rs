@@ -17,7 +17,7 @@ use splash::print_splash;
 use std::collections::HashMap;
 use std::{fs, path::PathBuf};
 
-use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_txt};
+use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
 #[derive(Parser, Debug)]
 struct CliArguments {
@@ -102,7 +102,7 @@ fn convert_labelme2yolo(json: &PathBuf, class_hash: &HashMap<String, i64>) -> ()
     let all_yolo = all_shapes
         .to_yolo(&class_hash)
         .expect("cannot convert yolo");
-    let _write = write_yolo_txt(all_yolo, &json);
+    let _write = write_yolo_to_txt(all_yolo, &json);
 }
 
 fn move_files(
