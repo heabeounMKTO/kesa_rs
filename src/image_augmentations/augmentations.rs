@@ -1,5 +1,5 @@
 use crate::fileutils::{write_labelme_to_json, write_yolo_to_txt};
-use crate::image_utils::{open_image, dynimg2string_png};
+use crate::image_utils::{dynimg2string_png, open_image};
 use crate::label::Shape;
 use crate::label::{CoordinateType, LabelmeAnnotation, Xyxy, YoloAnnotation};
 use anyhow::{Error, Result};
@@ -26,7 +26,7 @@ pub enum AugmentationType {
     HueRotate180,
     HueRotate210,
     HueRotate270,
-    Grayscale
+    Grayscale,
 }
 
 #[derive(Debug)]
@@ -52,12 +52,12 @@ impl ImageAugmentation {
         img_path.push(&img_fname);
         label_path.push(format!("{}.json", &anno_uuid));
         self.image.save(&img_path)?;
-        self.coords.imageData = dynimg2string_png(&self.image)?; 
+        self.coords.imageData = dynimg2string_png(&self.image)?;
         self.coords.imagePath = img_fname.to_owned();
         let yolo_anno = self.coords.to_yolo(class_hash)?;
 
         write_labelme_to_json(&self.coords, &img_path)?;
-        // TODO: add option to export 
+        // TODO: add option to export
         // yolo directly
         // write_yolo_to_txt(yolo_anno, &img_path)?;
         Ok(())
@@ -70,17 +70,16 @@ impl ImageAugmentation {
             coords: coords,
         }
     }
-    
+
     pub fn grayscale(&mut self) {
         let _gscale = colorops::grayscale_alpha(&self.image);
-        
+
         self.image = DynamicImage::ImageLumaA8(_gscale);
     }
 
-
     pub fn huerotate(&mut self, rotate_degree: i32) {
         let _hrotate = colorops::huerotate(&self.image, rotate_degree);
-        
+
         self.image = DynamicImage::ImageRgba8(_hrotate);
     }
 
@@ -88,7 +87,6 @@ impl ImageAugmentation {
         let _unsharpen = imageops::unsharpen(&self.image, sigma, threshold);
         self.image = DynamicImage::ImageRgba8(_unsharpen);
     }
-
 
     /// adds random amount of brightness in a given range
     /// negative values subtract brightness
