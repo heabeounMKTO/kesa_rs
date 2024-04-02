@@ -4,6 +4,7 @@ use crate::label::Shape;
 use crate::label::{CoordinateType, LabelmeAnnotation, Xyxy, YoloAnnotation};
 use anyhow::{Error, Result};
 use clap::Subcommand;
+use image::imageops::colorops;
 use image::{self, imageops, DynamicImage, GenericImageView};
 use ndarray::prelude::*;
 use rand::prelude::*;
@@ -17,7 +18,14 @@ pub enum AugmentationType {
     FlipHorizontal,
     FlipVeritcal,
     RandomBrightness,
-    UnSharpen
+    UnSharpen,
+    HueRotate30,
+    HueRotate60,
+    HueRotate90,
+    HueRotate120,
+    HueRotate180,
+    HueRotate210,
+    HueRotate270
 }
 
 #[derive(Debug)]
@@ -60,6 +68,12 @@ impl ImageAugmentation {
             image: image,
             coords: coords,
         }
+    }
+    
+    pub fn huerotate(&mut self, rotate_degree: i32) {
+        let _hrotate = colorops::huerotate(&self.image, rotate_degree);
+        
+        self.image = DynamicImage::ImageRgba8(_hrotate);
     }
 
     pub fn unsharpen(&mut self, sigma: f32, threshold: i32) {

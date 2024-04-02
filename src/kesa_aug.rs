@@ -78,17 +78,26 @@ fn main() -> Result<(), Error> {
            let mut rng = rand::thread_rng();
            // get random number that 
            // corresponds toa  augmentation type
-           let aug_t = Uniform::from(0..4).sample(&mut rng);
+           let aug_t = Uniform::from(0..11).sample(&mut rng);
            let do_aug = match aug_t {
                 0 => AugmentationType::FlipHorizontal,
                 1 => AugmentationType::FlipVeritcal,
                 2 => AugmentationType::RandomBrightness, 
                 3 => AugmentationType::UnSharpen,
+                4 => AugmentationType::HueRotate30,
+                5 => AugmentationType::HueRotate60,
+                6 => AugmentationType::HueRotate90,
+                7 => AugmentationType::HueRotate120,
+                8 => AugmentationType::HueRotate180,
+                9 => AugmentationType::HueRotate210,
+                10 => AugmentationType::HueRotate270,
                 _ => panic!("unknown augmentation type!") 
+
             };
-        create_augmentations( do_aug, &file, &classes_hash, &export_format, &args.folder);
+
+            // FUCK THEM RESULT HANDLING KIDS
+        create_augmentations(do_aug, &file, &classes_hash, &export_format, &args.folder);
         }
-        // fuck handing <Result>
     });
     prog.finish_with_message("created augmentations!\n");
     Ok(())
@@ -121,6 +130,27 @@ fn create_augmentations(
         },
         AugmentationType::UnSharpen => {
             aug.unsharpen(10.0, 2);
+        },
+        AugmentationType::HueRotate30 => {
+            aug.huerotate(30);
+        },
+        AugmentationType::HueRotate60 => {
+            aug.huerotate(60);
+        }, 
+        AugmentationType::HueRotate90 => {
+            aug.huerotate(90);
+        },
+        AugmentationType::HueRotate120 => {
+            aug.huerotate(120);
+        },
+        AugmentationType::HueRotate180 => {
+            aug.huerotate(180);
+        },
+        AugmentationType::HueRotate210 => {
+            aug.huerotate(210);
+        },
+        AugmentationType::HueRotate270 => {
+            aug.huerotate(270);
         }
     }
     aug.write_annotations(&PathBuf::from(export_folder), class_hash)?;
