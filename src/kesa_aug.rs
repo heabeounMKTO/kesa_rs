@@ -19,7 +19,31 @@ use std::{fs, path::PathBuf};
 
 use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
+#[derive(Parser, Debug)]
+struct CliArguments {
+    #[arg(long)]
+    folder: String,
 
-fn main() {
-    println!("fuick");
+    #[arg(long)]
+    workers: Option<i64>,
+
+    #[arg(long)]
+    export: Option<String>,
+}
+
+
+fn main() -> Result<(), Error> {
+    print_splash();
+    let args = CliArguments::parse();
+    let workers = match &args.workers {
+        Some(ref _i64) => args.workers,
+        None => Some(4)
+    };
+    
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(workers.unwrap().try_into().unwrap())
+        .build_global()
+        .unwrap();
+    Ok(())
+
 }
