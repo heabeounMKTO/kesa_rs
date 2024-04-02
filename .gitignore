@@ -17,3 +17,4 @@ Cargo.lock
 detect_models/*
 test/*
 export/*
+models/*
