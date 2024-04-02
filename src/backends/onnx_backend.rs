@@ -160,6 +160,7 @@ pub fn load_onnx_model(
     // why are we here? just to suffer?
     let model: ort::Session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
+        .commit_from_file(&model_path)        
         .commit_from_file(&model_path)
         .unwrap();
     let model_yaml_config_path = get_config_from_name(&config_path, &model_path)
