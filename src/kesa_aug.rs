@@ -30,6 +30,10 @@ struct CliArguments {
     #[arg(long)]
     /// export folder
     export: Option<String>,
+
+    #[arg(long)]
+    /// export format , labelme or yolo?!
+    format: Option<String>
 }
 
 
@@ -41,6 +45,14 @@ fn main() -> Result<(), Error> {
         None => Some(4)
     };
     
+    let export_format = match &args.format {
+        Some(ref String) => args.format,
+        None => Some(String::from("labelme")) 
+    }.unwrap();
+
+
+    println!("export format {:?}", &export_format);
+
     rayon::ThreadPoolBuilder::new()
     .num_threads(workers.unwrap().try_into().unwrap())
     .build_global()
@@ -48,14 +60,20 @@ fn main() -> Result<(), Error> {
     let mut spinner0 = Spinner::new(spinners::Hearts, "collecting jsons..", Color::White);
     let all_json = get_all_jsons(&args.folder)?;
     let all_classes = get_all_classes(&all_json)?;
-    let classes_hash = get_all_classes_hash(&all_classes);
+    let classes_hash = get_all_classes_hash(&all_classes)?;
     spinner0.success(format!("found {:?} json files", &all_json.len()).as_str());
     let prog = ProgressBar::new(all_json.len().to_owned() as u64);
     all_json.par_iter().for_each(|file| {
        prog.inc(1);
-       
+       create_augmentations(&export_format); 
     });
     prog.finish_with_message("created augmentations!\n");
     Ok(())
-
 }
+
+
+fn create_augmentations(export_format: &str) -> Result<() , Error> {
+    Ok(())
+}
+
+
