@@ -48,6 +48,8 @@ impl ImageAugmentation {
         let yolo_anno = self.coords.to_yolo(class_hash)?;
 
         write_labelme_to_json(&self.coords, &img_path)?;
+        // TODO: add option to export 
+        // yolo directly
         // write_yolo_to_txt(yolo_anno, &img_path)?;
         Ok(())
     }
@@ -61,7 +63,8 @@ impl ImageAugmentation {
     }
 
     pub fn unsharpen(&mut self, sigma: f32, threshold: i32) {
-        todo!()
+        let _unsharpen = imageops::unsharpen(&self.image, sigma, threshold);
+        self.image = DynamicImage::ImageRgba8(_unsharpen);
     }
 
 

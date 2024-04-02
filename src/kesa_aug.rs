@@ -41,18 +41,12 @@ struct CliArguments {
     #[arg(long)]
     /// times to augment the image
     /// by default is 5 times
-    times: Option<i32>
+    times: i32 
 }
 
 fn main() -> Result<(), Error> {
     print_splash();
     let args = CliArguments::parse();
-
-
-    let aug_times = match &args.times {
-       Some(ref _i64) => args.workers,
-       None => Some(5)
-    };
 
     let workers = match &args.workers {
         Some(ref _i64) => args.workers,
@@ -80,7 +74,7 @@ fn main() -> Result<(), Error> {
 
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
-        for _ in 0..(aug_times.unwrap()) {
+        for _ in 0..(args.times) {
            let mut rng = rand::thread_rng();
            // get random number that 
            // corresponds toa  augmentation type
@@ -90,9 +84,8 @@ fn main() -> Result<(), Error> {
                 1 => AugmentationType::FlipVeritcal,
                 2 => AugmentationType::RandomBrightness, 
                 3 => AugmentationType::UnSharpen,
-                _ => todo!()
+                _ => panic!("unknown augmentation type!") 
             };
-           println!("aug_type {:?}", &do_aug);
         create_augmentations( do_aug, &file, &classes_hash, &export_format, &args.folder);
         }
         // fuck handing <Result>
