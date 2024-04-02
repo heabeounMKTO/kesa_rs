@@ -100,7 +100,6 @@ fn convert_labelme2yolo(json: &PathBuf, class_hash: &HashMap<String, i64>) -> ()
     let _write = write_yolo_to_txt(all_yolo, &json);
 }
 
-
 fn move_files(
     input_array: Vec<PathBuf>,
     orig_path: &str,
@@ -117,9 +116,6 @@ fn move_files(
         // use imagePath from labelme so we dont have to do some png jpeg and jpg lookup bullshit
         let orig_image_file =
             PathBuf::from(format!("{}/{}", &orig_path, &read_json_file.imagePath));
-
-        // println!("txt: {:?} , img: {:?}", &orig_txt_file, &orig_image_file);
-
         match batch {
             "train" => {
                 let dest_image = format!(

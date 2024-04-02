@@ -7,5 +7,3 @@ pub mod model;
 mod output;
 pub mod plotting;
 mod splash;
-
-
