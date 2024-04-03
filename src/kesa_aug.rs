@@ -76,7 +76,6 @@ fn main() -> Result<(), Error> {
         prog.inc(1);
         for _ in 0..(args.variations) {
             // idk how can this cause a panic ok
-            println!("FILE: {:?}", &file);
             let do_aug = get_random_aug().unwrap();
 
             // FUCK THEM <<RESULT>> HANDLING KIDS
