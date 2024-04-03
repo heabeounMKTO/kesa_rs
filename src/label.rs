@@ -176,10 +176,10 @@ impl LabelmeAnnotation {
         let mut yolo_label_list: Vec<YoloAnnotation> = vec![];
         for shape in self.shapes.iter() {
             let temp_xyxy: Xyxy = get_xyxy_from_shape(&shape, CoordinateType::Normalized);
-            let x = ((temp_xyxy.x1 + temp_xyxy.x2) / 2.0) / self.imageWidth as f32;
-            let y = ((temp_xyxy.y1 + temp_xyxy.y2) / 2.0) / self.imageHeight as f32;
-            let w = (temp_xyxy.x2 - temp_xyxy.x1) / self.imageWidth as f32;
-            let h = (temp_xyxy.y2 - temp_xyxy.y1) / self.imageHeight as f32;
+            let x = (((temp_xyxy.x1 + temp_xyxy.x2) / 2.0) / self.imageWidth as f32).abs();
+            let y = (((temp_xyxy.y1 + temp_xyxy.y2) / 2.0) / self.imageHeight as f32).abs();
+            let w = ((temp_xyxy.x2 - temp_xyxy.x1) / self.imageWidth as f32).abs();
+            let h = ((temp_xyxy.y2 - temp_xyxy.y1) / self.imageHeight as f32).abs();
             let label_index = class_hash.get(&shape.label).expect("cannot find index!");
             let yolo_struct: YoloAnnotation = YoloAnnotation {
                 class: *label_index, // deref bih, uh
