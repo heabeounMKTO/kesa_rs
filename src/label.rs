@@ -323,9 +323,8 @@ impl OutputFormat for Embeddings {
         image_file: &DynamicImage,
         inference_dimension: &(u32, u32),
     ) -> Result<LabelmeAnnotation, anyhow::Error> {
-        let all_shapes: Vec<Shape> = self.to_shape(all_classes, 
-                                                   original_dimension,
-                                                   inference_dimension)?;
+        let all_shapes: Vec<Shape> =
+            self.to_shape(all_classes, original_dimension, inference_dimension)?;
         let version: String = String::from("5.1.1");
         let _file = PathBuf::from(&filename);
         let flags: HashMap<String, String> = HashMap::new();
@@ -340,7 +339,7 @@ impl OutputFormat for Embeddings {
             imageData: base64img,
             // TODO: change to filename instead
             // of the whole mf directory
-            imagePath: _file.file_name().unwrap().to_string_lossy().to_string()
+            imagePath: _file.file_name().unwrap().to_string_lossy().to_string(),
         })
     }
 }
