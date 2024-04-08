@@ -158,7 +158,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
         2 => AugmentationType::RandomBrightness,
         3 => AugmentationType::UnSharpen,
         4 => AugmentationType::HueRotate30,
-        5 => AugmentationType::HueRotate60, 
+        5 => AugmentationType::HueRotate60,
         6 => AugmentationType::HueRotate90,
         7 => AugmentationType::HueRotate120,
         8 => AugmentationType::HueRotate180,

@@ -95,6 +95,19 @@ pub fn get_all_images(input_folder: &str) -> Vec<PathBuf> {
         .collect()
 }
 
+pub fn get_all_txts(input: &str) -> Result<Vec<PathBuf>, Error> {
+    let all_jsons: Vec<PathBuf> = fs::read_dir(&input)
+        .unwrap()
+        .filter_map(|f| f.ok())
+        .filter(|f| match f.path().extension() {
+            None => false,
+            Some(ex) => ex == "txt",
+        })
+        .map(|f| f.path())
+        .collect();
+    Ok(all_jsons)
+}
+
 pub fn get_all_jsons(input: &str) -> Result<Vec<PathBuf>, Error> {
     let all_jsons: Vec<PathBuf> = fs::read_dir(&input)
         .unwrap()
