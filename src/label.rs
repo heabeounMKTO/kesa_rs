@@ -329,7 +329,7 @@ impl OutputFormat for Embeddings {
         let _file = PathBuf::from(&filename);
         let flags: HashMap<String, String> = HashMap::new();
         let base64img: String = dynimg2string(image_file).unwrap();
-        println!("IMAGE_PATH : {:?}", PathBuf::from(&filename).file_name());
+        // println!("IMAGE_PATH : {:?}", PathBuf::from(&filename).file_name());
         Ok(LabelmeAnnotation {
             version,
             flags: Some(flags),

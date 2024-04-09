@@ -103,7 +103,7 @@ fn main() -> Result<(), Error> {
             fs::create_dir_all(&front_sort_dir)?;
             fs::create_dir_all(&back_sort_dir)?;
         }
-        false => println!(""),
+        false => (),
     };
     rayon::ThreadPoolBuilder::new()
         .num_threads(workers.unwrap().try_into().unwrap())
@@ -143,7 +143,7 @@ fn main() -> Result<(), Error> {
                                     true => {
                                         move_to_sort_dir(&image_path, &front_sort_dir);
                                     }
-                                    false => println!("skipping sorting"),
+                                    false => (),
                                 }
                             }
                             Err(e) => {
@@ -151,7 +151,7 @@ fn main() -> Result<(), Error> {
                                     true => {
                                         move_to_sort_dir(&image_path, &back_sort_dir);
                                     }
-                                    false => println!("skipping sorting"),
+                                    false => (),
                                 }
                                 let _ = e;
                             }
