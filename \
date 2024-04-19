@@ -39,7 +39,7 @@ struct CliArguments {
     format: Option<String>,
 
     #[arg(long)]
-    /// image variations to create
+    /// image variations to create  
     /// by default is 5 times
     variations: i32,
 }
@@ -141,9 +141,6 @@ fn create_augmentation(
         }
         AugmentationType::Grayscale => {
             aug.grayscale();
-        }
-        AugmentationType::Rotate90 => {
-            aug.rotate_90_counterclockwise();
         }
     }
     aug.write_annotations(&PathBuf::from(folder), class_hash)?;

@@ -5,7 +5,7 @@ use crate::label::{CoordinateType, LabelmeAnnotation, Xyxy, YoloAnnotation};
 use anyhow::{Error, Result};
 use clap::Subcommand;
 use image::imageops::colorops;
-use image::{self, imageops, DynamicImage, GenericImageView};
+use image::{self, imageops, DynamicImage, GenericImage, GenericImageView};
 use ndarray::prelude::*;
 use rand::prelude::*;
 use sorted_list::Tuples;
@@ -27,12 +27,30 @@ pub enum AugmentationType {
     HueRotate210,
     HueRotate270,
     Grayscale,
+    Rotate90,
 }
 
 #[derive(Debug)]
 pub struct ImageAugmentation {
     pub image: DynamicImage,
     pub coords: LabelmeAnnotation,
+}
+
+fn rotate_90_degrees_ccw(img: &DynamicImage) -> DynamicImage {
+    // Get the dimensions of the image
+    let (width, height) = img.dimensions();
+
+    // Create a new image buffer for the rotated image
+    let mut rotated_img = image::DynamicImage::new_rgba8(height, width);
+
+    // Iterate over each pixel in the original image and copy it to the rotated image
+    for y in 0..height {
+        for x in 0..width {
+            let pixel = img.get_pixel(x, y);
+            rotated_img.put_pixel(height - y - 1, x, pixel);
+        }
+    }
+    rotated_img
 }
 
 impl ImageAugmentation {
@@ -86,6 +104,11 @@ impl ImageAugmentation {
     pub fn unsharpen(&mut self, sigma: f32, threshold: i32) {
         let _unsharpen = imageops::unsharpen(&self.image, sigma, threshold);
         self.image = DynamicImage::ImageRgba8(_unsharpen);
+    }
+
+    pub fn rotate_90_counterclockwise(&mut self) {
+        let _rotate_90_cc = rotate_90_degrees_ccw(&self.image);
+        self.image = _rotate_90_cc;
     }
 
     /// adds random amount of brightness in a given range
