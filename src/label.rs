@@ -152,7 +152,7 @@ impl OutputFormat for YoloAnnotation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone,PartialEq, Serialize, Deserialize)]
 pub struct LabelmeAnnotation {
     pub version: String,
     pub flags: Option<HashMap<String, String>>,
@@ -206,7 +206,7 @@ impl LabelmeAnnotation {
 }
 
 /// parsed directrly from the json file eh
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
     pub label: String,
     pub points: Vec<Vec<f32>>,
