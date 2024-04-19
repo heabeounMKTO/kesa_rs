@@ -1,4 +1,5 @@
 use anyhow::{Error, Result};
+use sorted_list::Tuples;
 use std::io;
 use std::result;
 use tch::kind;
@@ -33,10 +34,18 @@ impl TchModel {
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
-        let pred = self.model.forward_is(&[IValue::from(img)])?;
-        let pred_t = tch::Tensor::try_from(pred)?;
-        println!("pred_t {:?}", pred_t);
+        let mut pred = self.model.forward_is(&[IValue::from(img)])?;
+        
+        let (tensor1, tensor2): (Vec<Tensor>,Vec<Tensor>) = match &pred {
+            IValue::Tuple(ivalues) => match &ivalues {
+                [<IValue::Tensor(t1)> <IValue::Tensor(t2)>] => (t1.shallow_clone(), t2.shallow_clone()),  
+                _ => bail!("unexpected ivalue output {:?}", ivalues),
+            }
+            _ => bail!("unexpected tch output"),
+        };
+
         Ok(())
+
     }
 
     pub fn run(&self, image: &tch::Tensor, conf_thresh: f32, iou_thresh: f64) -> Result<(), Error> {
