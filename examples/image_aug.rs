@@ -30,9 +30,10 @@ pub fn main() -> Result<(), Error> {
         image: read_img,
         coords: read_annotations,
     };
-    aug.flip_v();
-    aug.flip_h();
-    aug.random_brightness((-100, 100));
+    // aug.flip_v();
+    // aug.flip_h();
+    // aug.random_brightness((-100, 100));
+    aug.rotate_90_counterclockwise();
     aug.write_annotations(&PathBuf::from("test"), &all_classes_hash);
     Ok(())
 }

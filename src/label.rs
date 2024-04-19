@@ -9,6 +9,17 @@ use serde_json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+#[derive(Debug)]
+pub struct Xywh {
+    pub coordinates_type: CoordinateType,
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32
+}
+
+
 /// struct for storing generic xyxy's
 /// for conversion between normalized
 /// and screen coordinates.
