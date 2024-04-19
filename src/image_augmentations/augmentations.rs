@@ -203,8 +203,9 @@ mod test_augmetations {
     use crate::image_utils::*;
     use crate::fileutils::{get_all_jsons, get_all_classes, get_all_classes_hash};
     use crate::label::{Shape, read_labels_from_file}; 
+
     #[test]
-    fn test_fliph() {
+    fn test_flip() {
         let read_img = open_image("test/test.png").unwrap();        
         let read_annotations = read_labels_from_file("test/test.json").unwrap();
         let mut _aug = augmentations::ImageAugmentation::new(
@@ -236,6 +237,5 @@ mod test_augmetations {
             panic!()
         }
 
-    
     } 
 }
