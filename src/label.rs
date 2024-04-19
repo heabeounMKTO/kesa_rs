@@ -152,7 +152,7 @@ impl OutputFormat for YoloAnnotation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone,PartialEq, Serialize, Deserialize)]
 pub struct LabelmeAnnotation {
     pub version: String,
     pub flags: Option<HashMap<String, String>>,
@@ -206,7 +206,7 @@ impl LabelmeAnnotation {
 }
 
 /// parsed directrly from the json file eh
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
     pub label: String,
     pub points: Vec<Vec<f32>>,
@@ -361,3 +361,33 @@ pub fn read_labels_from_file(filename: &str) -> Result<LabelmeAnnotation, Error>
         .expect("LABELME ERROR: cannot read json to label me struct!");
     Ok(read_json_to_struct)
 }
+
+
+#[cfg(test)]
+mod test_read_labels_from_file {
+    use crate::label::*;
+    use crate::fileutils::*;
+
+    #[test]
+    fn read_label_from_file() {
+        let _read = crate::label::read_labels_from_file("test/test.json").unwrap();
+        assert_eq!(_read.imagePath, "test.png");
+        assert_eq!(_read.version, "5.4.1");
+        assert_eq!(_read.shapes.len(), 4);
+        assert_eq!(_read.imageWidth, 1024);
+        assert_eq!(_read.imageHeight, 1024);
+    }
+     
+
+    #[test]
+    fn yolo_from_labelme() {
+        let _all_json = get_all_jsons("test").unwrap();
+        let _all_classes = get_all_classes(&_all_json).unwrap();
+        let _all_classes_hash = get_all_classes_hash(&_all_classes).unwrap();
+        let _read = read_labels_from_file("test/test.json").unwrap();
+        let _yolo = _read.to_yolo(&_all_classes_hash).unwrap();    
+        dbg!("yolo: {:?}", &_yolo);  
+        assert_eq!(_yolo.len(), 4); 
+    }
+}
+

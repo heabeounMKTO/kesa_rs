@@ -30,7 +30,7 @@ pub enum AugmentationType {
     Rotate90
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone, PartialEq)]
 pub struct ImageAugmentation {
     pub image: DynamicImage,
     pub coords: LabelmeAnnotation,
@@ -193,4 +193,49 @@ impl ImageAugmentation {
             shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * - 1.0;
         }
     }
+}
+
+
+
+#[cfg(test)]
+mod test_augmetations {
+    use crate::image_augmentations::augmentations;
+    use crate::image_utils::*;
+    use crate::fileutils::{get_all_jsons, get_all_classes, get_all_classes_hash};
+    use crate::label::{Shape, read_labels_from_file}; 
+
+    #[test]
+    fn test_flip() {
+        let read_img = open_image("test/test.png").unwrap();        
+        let read_annotations = read_labels_from_file("test/test.json").unwrap();
+        let mut _aug = augmentations::ImageAugmentation::new(
+            read_img , read_annotations
+        );
+
+        let _noaug_shape = vec![[220.33333, 335.2143], [356.0476, 464.9762]];
+        if _aug.coords.shapes[0].points != _noaug_shape {
+            panic!()
+        } 
+
+        assert_eq!(_aug.coords.shapes.len(), 4);  
+        assert_eq!(_aug.coords.imagePath, "test.png");
+        assert_eq!(_aug.coords.imageHeight, 1024);
+        assert_eq!(_aug.coords.imageWidth, 1024);
+        assert_eq!(_aug.coords.version, "5.4.1");
+        
+        let mut _flipv = _aug.to_owned();
+        _flipv.flip_v();
+        let _flipv_shape = vec![[220.33333, 688.7857], [356.0476, 559.0238]];
+        if _flipv.coords.shapes[0].points != _flipv_shape {
+            panic!()
+        }
+
+        let mut _fliph = _aug.to_owned();
+        _fliph.flip_h();
+        let _fliph_shape = vec![[803.6667, 335.2143], [667.9524,464.9762]]; 
+        if _fliph.coords.shapes[0].points != _fliph_shape {
+            panic!()
+        }
+
+    } 
 }
