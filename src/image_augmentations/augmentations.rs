@@ -5,7 +5,7 @@ use crate::label::{CoordinateType, LabelmeAnnotation, Xyxy, YoloAnnotation};
 use anyhow::{Error, Result};
 use clap::Subcommand;
 use image::imageops::colorops;
-use image::{self, imageops, DynamicImage, GenericImageView, GenericImage};
+use image::{self, imageops, DynamicImage, GenericImage, GenericImageView};
 use ndarray::prelude::*;
 use rand::prelude::*;
 use sorted_list::Tuples;
@@ -27,15 +27,14 @@ pub enum AugmentationType {
     HueRotate210,
     HueRotate270,
     Grayscale,
-    Rotate90
+    Rotate90,
 }
 
-#[derive(Debug,Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ImageAugmentation {
     pub image: DynamicImage,
     pub coords: LabelmeAnnotation,
 }
-
 
 /// yea CHATGPT IS A LYING MF
 fn rotate_90_degrees_ccw(img: &DynamicImage) -> DynamicImage {
@@ -54,7 +53,6 @@ fn rotate_90_degrees_ccw(img: &DynamicImage) -> DynamicImage {
     }
     rotated_img
 }
-
 
 impl ImageAugmentation {
     /// write a augmented label & image
@@ -108,10 +106,9 @@ impl ImageAugmentation {
         let _unsharpen = imageops::unsharpen(&self.image, sigma, threshold);
         self.image = DynamicImage::ImageRgba8(_unsharpen);
     }
-    
 
     /// full credit to stackoverflow guy for this python code! :)
-    /// 
+    ///
     /// https://stackoverflow.com/questions/71960632/how-to-rotate-a-rectangle-bounding-box-together-with-an-image
     /// ```code
     /// # assuming [[x1,y1], [x2,y2]]
@@ -122,30 +119,30 @@ impl ImageAugmentation {
     ///  new_ymin = img_width-xmax
     ///  new_xmax = ymax
     ///  new_ymax = img_width-xmin
-    ///  return [[new_xmin, new_ymin], 
+    ///  return [[new_xmin, new_ymin],
     ///         [new_xmax, new_ymax]]
     /// ````
     pub fn rotate_90_counterclockwise(&mut self) {
         // this is a HACKy solution , but it works for now
-        // first rotate it by 90 degrees clockwise, 
+        // first rotate it by 90 degrees clockwise,
         // then flip h and flip v.
         //
-        // TODO: actual ccw function but not now :| 
+        // TODO: actual ccw function but not now :|
         let mut _rotate_90_ccw = imageops::rotate90(&self.image);
         _rotate_90_ccw = imageops::flip_vertical(&_rotate_90_ccw);
         _rotate_90_ccw = imageops::flip_horizontal(&_rotate_90_ccw);
         self.image = DynamicImage::ImageRgba8(_rotate_90_ccw);
-    
-        for shape in self.coords.shapes.iter_mut() {
-           let new_x1 = shape.points[0][1].to_owned();   
-           let new_y1 = &self.image.dimensions().0 - shape.points[1][0] as u32;
-           let new_x2 = shape.points[1][1].to_owned();
-           let new_y2 = &self.image.dimensions().0 - shape.points[0][0] as u32;
 
-           shape.points[0][0] = new_x1;
-           shape.points[0][1] = new_y1 as f32;
-           shape.points[1][0] = new_x2;
-           shape.points[1][1] = new_y2 as f32;
+        for shape in self.coords.shapes.iter_mut() {
+            let new_x1 = shape.points[0][1].to_owned();
+            let new_y1 = &self.image.dimensions().0 - shape.points[1][0] as u32;
+            let new_x2 = shape.points[1][1].to_owned();
+            let new_y2 = &self.image.dimensions().0 - shape.points[0][0] as u32;
+
+            shape.points[0][0] = new_x1;
+            shape.points[0][1] = new_y1 as f32;
+            shape.points[1][0] = new_x2;
+            shape.points[1][1] = new_y2 as f32;
         }
     }
 
@@ -170,8 +167,8 @@ impl ImageAugmentation {
         self.image = DynamicImage::ImageRgba8(flipped_v_image);
         for shape in self.coords.shapes.iter_mut() {
             // subtract y coord by height and mult by -1
-            shape.points[0][1] = (shape.points[0][1] - (self.image.dimensions().1 as f32)) * - 1.0;
-            shape.points[1][1] = (shape.points[1][1] - (self.image.dimensions().1 as f32)) * - 1.0;
+            shape.points[0][1] = (shape.points[0][1] - (self.image.dimensions().1 as f32)) * -1.0;
+            shape.points[1][1] = (shape.points[1][1] - (self.image.dimensions().1 as f32)) * -1.0;
         }
     }
 
@@ -189,40 +186,36 @@ impl ImageAugmentation {
         for shape in self.coords.shapes.iter_mut() {
             // subtract x coord by width and mult by -1
             // we dont use ndarrays here sir
-            shape.points[0][0] = (shape.points[0][0] - (self.image.dimensions().0 as f32)) * - 1.0;
-            shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * - 1.0;
+            shape.points[0][0] = (shape.points[0][0] - (self.image.dimensions().0 as f32)) * -1.0;
+            shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * -1.0;
         }
     }
 }
 
-
-
 #[cfg(test)]
 mod test_augmetations {
+    use crate::fileutils::{get_all_classes, get_all_classes_hash, get_all_jsons};
     use crate::image_augmentations::augmentations;
     use crate::image_utils::*;
-    use crate::fileutils::{get_all_jsons, get_all_classes, get_all_classes_hash};
-    use crate::label::{Shape, read_labels_from_file}; 
+    use crate::label::{read_labels_from_file, Shape};
 
     #[test]
     fn test_flip() {
-        let read_img = open_image("test/test.png").unwrap();        
+        let read_img = open_image("test/test.png").unwrap();
         let read_annotations = read_labels_from_file("test/test.json").unwrap();
-        let mut _aug = augmentations::ImageAugmentation::new(
-            read_img , read_annotations
-        );
+        let mut _aug = augmentations::ImageAugmentation::new(read_img, read_annotations);
 
         let _noaug_shape = vec![[220.33333, 335.2143], [356.0476, 464.9762]];
         if _aug.coords.shapes[0].points != _noaug_shape {
             panic!()
-        } 
+        }
 
-        assert_eq!(_aug.coords.shapes.len(), 4);  
+        assert_eq!(_aug.coords.shapes.len(), 4);
         assert_eq!(_aug.coords.imagePath, "test.png");
         assert_eq!(_aug.coords.imageHeight, 1024);
         assert_eq!(_aug.coords.imageWidth, 1024);
         assert_eq!(_aug.coords.version, "5.4.1");
-        
+
         let mut _flipv = _aug.to_owned();
         _flipv.flip_v();
         let _flipv_shape = vec![[220.33333, 688.7857], [356.0476, 559.0238]];
@@ -232,10 +225,9 @@ mod test_augmetations {
 
         let mut _fliph = _aug.to_owned();
         _fliph.flip_h();
-        let _fliph_shape = vec![[803.6667, 335.2143], [667.9524,464.9762]]; 
+        let _fliph_shape = vec![[803.6667, 335.2143], [667.9524, 464.9762]];
         if _fliph.coords.shapes[0].points != _fliph_shape {
             panic!()
         }
-
-    } 
+    }
 }
