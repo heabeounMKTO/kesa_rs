@@ -75,7 +75,9 @@ fn main() -> Result<(), Error> {
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
         for _ in 0..(args.variations) {
-            // idk how can this cause a panic ok
+            // idk how can this cause a panic ok\
+            //
+            // (comments before disaster)
             let do_aug = get_random_aug().unwrap();
 
             // FUCK THEM <<RESULT>> HANDLING KIDS
