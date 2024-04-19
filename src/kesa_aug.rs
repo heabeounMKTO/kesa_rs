@@ -154,7 +154,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
     let mut rng = rand::thread_rng();
     // get random number that
     // corresponds toa  augmentation type
-    let aug_t = Uniform::from(0..12).sample(&mut rng);
+    let aug_t = Uniform::from(0..13).sample(&mut rng);
     let do_aug = match aug_t {
         0 => AugmentationType::FlipHorizontal,
         1 => AugmentationType::FlipVeritcal,
@@ -168,6 +168,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
         9 => AugmentationType::HueRotate210,
         10 => AugmentationType::HueRotate270,
         11 => AugmentationType::Grayscale,
+        12 => AugmentationType::Rotate90
         _ => panic!("unknown augmentation type!"),
     };
     Ok(do_aug)

@@ -5,7 +5,7 @@ use crate::label::{CoordinateType, LabelmeAnnotation, Xyxy, YoloAnnotation};
 use anyhow::{Error, Result};
 use clap::Subcommand;
 use image::imageops::colorops;
-use image::{self, imageops, DynamicImage, GenericImage, GenericImageView};
+use image::{self, imageops, DynamicImage, GenericImageView, GenericImage};
 use ndarray::prelude::*;
 use rand::prelude::*;
 use sorted_list::Tuples;
@@ -27,7 +27,6 @@ pub enum AugmentationType {
     HueRotate210,
     HueRotate270,
     Grayscale,
-    Rotate90,
 }
 
 #[derive(Debug)]
@@ -36,6 +35,8 @@ pub struct ImageAugmentation {
     pub coords: LabelmeAnnotation,
 }
 
+
+/// yea CHATGPT IS A LYING MF
 fn rotate_90_degrees_ccw(img: &DynamicImage) -> DynamicImage {
     // Get the dimensions of the image
     let (width, height) = img.dimensions();
@@ -52,6 +53,7 @@ fn rotate_90_degrees_ccw(img: &DynamicImage) -> DynamicImage {
     }
     rotated_img
 }
+
 
 impl ImageAugmentation {
     /// write a augmented label & image
@@ -105,10 +107,15 @@ impl ImageAugmentation {
         let _unsharpen = imageops::unsharpen(&self.image, sigma, threshold);
         self.image = DynamicImage::ImageRgba8(_unsharpen);
     }
-
+    
     pub fn rotate_90_counterclockwise(&mut self) {
-        let _rotate_90_cc = rotate_90_degrees_ccw(&self.image);
-        self.image = _rotate_90_cc;
+        // flip v and then flip h 
+        // then rotate , we will get a CCW 
+        // i will write a actual CCW rotate function later (maybe idk)
+        let mut _rotate_90_ccw = imageops::rotate90(&self.image);
+        _rotate_90_ccw = imageops::flip_vertical(&_rotate_90_ccw);
+        _rotate_90_ccw = imageops::flip_horizontal(&_rotate_90_ccw);
+        self.image = DynamicImage::ImageRgba8(_rotate_90_ccw);
     }
 
     /// adds random amount of brightness in a given range
@@ -132,8 +139,8 @@ impl ImageAugmentation {
         self.image = DynamicImage::ImageRgba8(flipped_v_image);
         for shape in self.coords.shapes.iter_mut() {
             // subtract y coord by height and mult by -1
-            shape.points[0][1] = (shape.points[0][1] - (self.image.dimensions().1 as f32)) * -1.0;
-            shape.points[1][1] = (shape.points[1][1] - (self.image.dimensions().1 as f32)) * -1.0;
+            shape.points[0][1] = (shape.points[0][1] - (self.image.dimensions().1 as f32)) * - 1.0;
+            shape.points[1][1] = (shape.points[1][1] - (self.image.dimensions().1 as f32)) * - 1.0;
         }
     }
 
@@ -151,8 +158,8 @@ impl ImageAugmentation {
         for shape in self.coords.shapes.iter_mut() {
             // subtract x coord by width and mult by -1
             // we dont use ndarrays here sir
-            shape.points[0][0] = (shape.points[0][0] - (self.image.dimensions().0 as f32)) * -1.0;
-            shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * -1.0;
+            shape.points[0][0] = (shape.points[0][0] - (self.image.dimensions().0 as f32)) * - 1.0;
+            shape.points[1][0] = (shape.points[1][0] - (self.image.dimensions().0 as f32)) * - 1.0;
         }
     }
 }
