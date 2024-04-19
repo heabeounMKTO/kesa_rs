@@ -27,6 +27,7 @@ pub enum AugmentationType {
     HueRotate210,
     HueRotate270,
     Grayscale,
+    Rotate90
 }
 
 #[derive(Debug)]
@@ -108,14 +109,44 @@ impl ImageAugmentation {
         self.image = DynamicImage::ImageRgba8(_unsharpen);
     }
     
+
+    /// full credit to stackoverflow guy for this python code! :)
+    /// 
+    /// https://stackoverflow.com/questions/71960632/how-to-rotate-a-rectangle-bounding-box-together-with-an-image
+    /// ```code
+    /// # assuming [[x1,y1], [x2,y2]]
+    /// def rotate_90(bbox, img_width):
+    ///  xmin,ymin = bbox[0]
+    ///  xmax,ymax = bbox[1]
+    ///  new_xmin = ymin
+    ///  new_ymin = img_width-xmax
+    ///  new_xmax = ymax
+    ///  new_ymax = img_width-xmin
+    ///  return [[new_xmin, new_ymin], 
+    ///         [new_xmax, new_ymax]]
+    /// ````
     pub fn rotate_90_counterclockwise(&mut self) {
-        // flip v and then flip h 
-        // then rotate , we will get a CCW 
-        // i will write a actual CCW rotate function later (maybe idk)
+        // this is a HACKy solution , but it works for now
+        // first rotate it by 90 degrees clockwise, 
+        // then flip h and flip v.
+        //
+        // TODO: actual ccw function but not now :| 
         let mut _rotate_90_ccw = imageops::rotate90(&self.image);
         _rotate_90_ccw = imageops::flip_vertical(&_rotate_90_ccw);
         _rotate_90_ccw = imageops::flip_horizontal(&_rotate_90_ccw);
         self.image = DynamicImage::ImageRgba8(_rotate_90_ccw);
+    
+        for shape in self.coords.shapes.iter_mut() {
+           let new_x1 = shape.points[0][1].to_owned();   
+           let new_y1 = &self.image.dimensions().0 - shape.points[1][0] as u32;
+           let new_x2 = shape.points[1][1].to_owned();
+           let new_y2 = &self.image.dimensions().0 - shape.points[0][0] as u32;
+
+           shape.points[0][0] = new_x1;
+           shape.points[0][1] = new_y1 as f32;
+           shape.points[1][0] = new_x2;
+           shape.points[1][1] = new_y2 as f32;
+        }
     }
 
     /// adds random amount of brightness in a given range

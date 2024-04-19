@@ -168,7 +168,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
         9 => AugmentationType::HueRotate210,
         10 => AugmentationType::HueRotate270,
         11 => AugmentationType::Grayscale,
-        12 => AugmentationType::Rotate90
+        12 => AugmentationType::Rotate90,
         _ => panic!("unknown augmentation type!"),
     };
     Ok(do_aug)
