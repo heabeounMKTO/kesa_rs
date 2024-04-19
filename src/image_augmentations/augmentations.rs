@@ -194,3 +194,25 @@ impl ImageAugmentation {
         }
     }
 }
+
+
+
+#[cfg(test)]
+mod test_augmetations {
+    use crate::image_augmentations::augmentations;
+    use crate::image_utils::*;
+    use crate::fileutils::{get_all_jsons, get_all_classes, get_all_classes_hash};
+    use crate::label::read_labels_from_file; 
+    #[test]
+    fn test_fliph() {
+        let read_img = open_image("test/test.png").unwrap();        
+        let all_json = get_all_jsons("test").unwrap();
+        let all_classes = get_all_classes(&all_json).unwrap();
+        let all_classes_hash = get_all_classes_hash(&all_classes).unwrap();
+        let read_annotations = read_labels_from_file("test/test.json").unwrap();
+        let _aug = augmentations::ImageAugmentation::new(
+            read_img , read_annotations
+        );
+        assert_eq!(_aug.coords.shapes.len(), 4);  
+    } 
+}
