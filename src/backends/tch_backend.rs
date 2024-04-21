@@ -27,7 +27,6 @@ impl TchModel {
             h: h,
         }
     }
-
     pub fn warmup(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         img = img
@@ -35,11 +34,31 @@ impl TchModel {
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
-        let mut pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
         let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
-        println!("warmup tensor list: {:?}", _toTensorList);
+        println!(
+            "warmup tensor list: {:?}",
+            _toTensorList
+        );
         Ok(())
     }
+
+
+    /// for testing yolov5 models 
+    pub fn warmupv7(&self) -> Result<(), Error> {
+        let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
+        img = img
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Float)
+            .to_device(self.device)
+            .g_div_scalar(255.0);
+        let pred = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        let pred_T = tch::Tensor::try_from(pred)?;
+        println!("pred_t, {:?}", pred_T);
+        // todo!()
+        Ok(())
+    }
+
 
     pub fn run(&self, image: &tch::Tensor, conf_thresh: f32, iou_thresh: f64) -> Result<(), Error> {
         let mut img = tch::vision::image::resize(&image, self.w, self.h)?;
@@ -48,7 +67,7 @@ impl TchModel {
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
-        let pred = self.model.forward_is(&[IValue::from(img)]).unwrap();
+        let pred = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
         let pred_T = tch::Tensor::try_from(pred)?;
         println!("pred_t, {:?}", pred_T);
         // todo!()
