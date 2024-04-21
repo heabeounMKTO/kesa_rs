@@ -15,6 +15,6 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
 
 
 pub fn main() -> Result<(), Error> {
-    load_tch("test/cardDetv1.556_640x640.torchscript", None)?;  
+    load_tch("test/card_det_40k_640_final.torchscript", None)?;  
     Ok(())
 }

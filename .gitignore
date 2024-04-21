@@ -16,5 +16,7 @@ Cargo.lock
 #testings folders
 detect_models/*
 test/*.onnx
+test/*.torchscript
+test/*.pt
 export/*
 models/*
