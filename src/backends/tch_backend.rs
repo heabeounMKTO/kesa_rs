@@ -1,23 +1,20 @@
+use crate::label::Xyxy;
+use crate::label::YoloAnnotation;
+use anyhow::bail;
 use anyhow::{Error, Result};
 use conv::TryInto;
 use sorted_list::Tuples;
 use std::io;
-use tch::Tensor;
-use std::result;
 use tch::kind;
 use tch::IValue;
+use tch::Tensor;
 use tch::{self, vision::image};
-use crate::label::Xyxy;
-use crate::label::YoloAnnotation;
-use anyhow::{bail};
 pub struct TchModel {
     model: tch::CModule,
     device: tch::Device,
     w: i64,
     h: i64,
 }
-
- 
 
 impl TchModel {
     pub fn new(weights: &str, w: i64, h: i64, device: tch::Device) -> TchModel {
@@ -30,8 +27,6 @@ impl TchModel {
             h: h,
         }
     }
-    
-    
 
     pub fn warmup(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
@@ -44,7 +39,6 @@ impl TchModel {
         let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
         println!("warmup tensor list: {:?}", _toTensorList);
         Ok(())
-
     }
 
     pub fn run(&self, image: &tch::Tensor, conf_thresh: f32, iou_thresh: f64) -> Result<(), Error> {
@@ -60,7 +54,7 @@ impl TchModel {
         // todo!()
         Ok(())
     }
-/* 
+    /*
     fn iou(&self, b1: &Xyxy, b2: &Xyxy) -> f64 {
         let b1_area = (b1.xmax - b1.xmin + 1.) * (b1.ymax - b1.ymin + 1.);
         let b2_area = (b2.xmax - b2.xmin + 1.) * (b2.ymax - b2.ymin + 1.);
@@ -95,7 +89,7 @@ impl TchModel {
                     }
                 }
                 if pred[5 + class_index] > 0. {
-                    
+
                     let bbox = Xyxy {
                         xmin: pred[0] - pred[2] / 2.,
                         ymin: pred[1] - pred[3] / 2.,
@@ -107,7 +101,7 @@ impl TchModel {
                     bboxes[class_index].push(bbox);
 
                 }
-                
+
             }
         }
 

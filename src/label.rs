@@ -100,17 +100,24 @@ pub struct YoloAnnotation {
     pub ymin: f32,
     pub w: f32,
     pub h: f32,
-    pub confidence: f32
+    pub confidence: f32,
 }
 impl YoloAnnotation {
-    pub fn new(class: i64, xmin: f32, ymin: f32, w: f32, h: f32, confidence: f32) -> YoloAnnotation {
+    pub fn new(
+        class: i64,
+        xmin: f32,
+        ymin: f32,
+        w: f32,
+        h: f32,
+        confidence: f32,
+    ) -> YoloAnnotation {
         YoloAnnotation {
             class,
             xmin,
             ymin,
             w,
             h,
-            confidence
+            confidence,
         }
     }
     /// for creating placeholder
@@ -201,7 +208,7 @@ impl LabelmeAnnotation {
                 w: w,
                 h: h,
                 // TODO: IF ANYTHING GOES SHIT WITH YOLO CONVERTSION CHECK HERE
-                confidence: 1.0
+                confidence: 1.0,
             };
             yolo_label_list.push(yolo_struct);
         }
@@ -325,7 +332,7 @@ impl OutputFormat for Embeddings {
                     elm[2],        // xmax
                     elm[3],        // w
                     elm[4],        // h
-                    elm[6]
+                    elm[6],
                 );
                 yolo_arr.push(res);
             }
