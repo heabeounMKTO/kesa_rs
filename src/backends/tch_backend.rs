@@ -29,6 +29,8 @@ impl TchModel {
             h: h,
         }
     }
+    
+    
 
     pub fn warmup(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
@@ -38,17 +40,9 @@ impl TchModel {
             .to_device(self.device)
             .g_div_scalar(255.0);
         let mut pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("predictions {:?}", &pred); 
-    //     let (tensor1, tensor2) = match pred {
-    //     IValue::TensorList(ivalues) => match &ivalues[..] {
-    //         [IValue::Tensor(t1), IValue::Tensor(t2)] => (t1.shallow_clone(), t2.shallow_clone()),
-    //         _ => bail!("unexpected output {:?}", ivalues),
-    //     },
-    //     _ => bail!("unexpected output {:?}", pred),
-    // };
-    let fuck = Vec::<tch::Tensor>::try_from(pred);
-        println!("fuck: {:?}", fuck);
-    Ok(())
+        let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
+        println!("warmup tensor list: {:?}", _toTensorList);
+        Ok(())
 
     }
 
