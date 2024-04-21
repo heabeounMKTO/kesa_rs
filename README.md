@@ -10,7 +10,14 @@ kesa comes with a few binaries.
 
 
 # external dependencies
-todo
+## onnxruntime 
+- build/download library [onnxruntime](https://github.com/microsoft/onnxruntime)
+- add to path (in this example this is the cuda version):
+  ```bash
+  export LD_LIBRARY_PATH=/path/to/onnxruntime-linux-x64-cuda-1.17.1/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+  ```
+## tch-rs 
+*wip*
 
 # building 
 make sure you have the dependencies listed above <br>
