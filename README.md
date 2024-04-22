@@ -19,6 +19,7 @@ you can compile with either or both. you just need to download and link the libr
   export LD_LIBRARY_PATH=/path/to/onnxruntime-linux-x64-cuda-1.17.1/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
   ```
 ## tch-rs 
+*wip*
 - download libtorch from [pytorch](https://pytorch.org/) site
 - add to your ~/.zshrc or ~/.bashrc:
   ```bash
