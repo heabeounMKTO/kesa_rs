@@ -18,8 +18,9 @@ use crate::{
 use anyhow::{Error, Result};
 use backends::{
     compute_backends::{get_backend, ComputeBackendType},
-    onnx_backend::{init_onnx_backend, load_onnx_model},
 };
+#[cfg(feature = "onnx")]
+use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
 use clap::{ArgAction, Parser};
 use fileutils::{open_image, write_yolo_to_txt};
 use image::{DynamicImage, GenericImageView};
@@ -88,7 +89,9 @@ lazy_static! {
 fn main() -> Result<(), Error> {
     print_splash();
     println!("Running Autolabeling");
+    #[cfg(feature="onnx")]
     let init_onnx = init_onnx_backend()?;
+    
     let args = CliArguments::parse();
     let workers = match &args.workers {
         Some(ref i64) => args.workers,
@@ -113,6 +116,8 @@ fn main() -> Result<(), Error> {
     let model_type: ComputeBackendType = get_backend(&args.weights)?;
     println!("Detected model format : {:#?}", &model_type);
     match model_type {
+        _ => panic!("cannot infer model type!"),
+        #[cfg(feature="onnx")]
         ComputeBackendType::OnnxModel => {
             let load_model = load_onnx_model(
                 &args.weights,

@@ -29,7 +29,7 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
     let test_inf = loaded_model.run_fp16(&_pimg2, 0.7, 0.6, "yolov9")?;
     println!(
         "testinf[1] to yolo: {:?}",
-        test_inf[0].to_shape(&_ac, &_img2.dimensions(), &(640, 640))
+        test_inf[0].to_shape(&_ac, &_img2.dimensions(), &(640, 640))?
     );
     Ok(loaded_model)
 }
