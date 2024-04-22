@@ -59,8 +59,21 @@ impl TchModel {
         Ok(())
     }
     
+
+
+    /// runs inference in half (fp16) precision 
+    pub fn run_fp16(
+        &self,
+        image: &tch::Tensor,
+        conf_thresh: f32,
+        iou_thresh: f32,
+        yolo_version: &str
+    ) {
+        todo!()
+    } 
     
 
+    /// runs inference in full (fp32) precision :) 
     pub fn run(
         &self,
         image: &tch::Tensor,
@@ -68,30 +81,15 @@ impl TchModel {
         iou_thresh: f32,
         yolo_version: &str,
     ) -> Result<Vec<YoloAnnotation>, Error> {
-        // let mut img = tch::vision::image::resize(&image, self.w, self.h)?;
         let img = image.to_kind(tch::Kind::Float).to_device(self.device); 
-            // .unsqueeze(0)
-            // .to_kind(tch::Kind::Float)
-            // .to_device(self.device)
-            // .g_div_scalar(255.0);
         match yolo_version {
             "yolov9" => {
-                /* let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-                println!("DEBUG: yolov9 pred {:?}", &pred);
-                let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
-                let _transposed_o = _toTensorList[0].transpose(2,1);
-                
-                // println!("transposed: {:?}", _transposed_o);
-                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
-                println!("results:{:?}", &results); */
                 let pred = self.model.forward_ts(&[img])
                                         .unwrap()
                                         .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
                 println!("transpoed: {:?}", _transposed_o);
-                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
-                // println!("results :{:?}", results);
-                results
+                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh)
             }
             _ => {
                 let pred = self.model.forward_ts(&[img])
@@ -119,7 +117,7 @@ impl TchModel {
         (i_area / (b1_area + b2_area - i_area)) as f32
     }
     
-
+    /// temporary function for getting NMS for yolov9 models :) 
     fn nms_yolov9(
         &self, 
         pred: &Tensor,
@@ -189,7 +187,6 @@ impl TchModel {
         println!("Result: {:?}", &result);
         Ok(result)
     }
-
 
 
     fn non_max_suppression(
