@@ -16,9 +16,8 @@ pub struct Xywh {
     pub x: f32,
     pub y: f32,
     pub w: f32,
-    pub h: f32
+    pub h: f32,
 }
-
 
 /// struct for storing generic xyxy's
 /// for conversion between normalized
@@ -94,22 +93,31 @@ impl Xyxy {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct YoloAnnotation {
     pub class: i64,
     pub xmin: f32,
     pub ymin: f32,
     pub w: f32,
     pub h: f32,
+    pub confidence: f32,
 }
 impl YoloAnnotation {
-    pub fn new(class: i64, xmin: f32, ymin: f32, w: f32, h: f32) -> YoloAnnotation {
+    pub fn new(
+        class: i64,
+        xmin: f32,
+        ymin: f32,
+        w: f32,
+        h: f32,
+        confidence: f32,
+    ) -> YoloAnnotation {
         YoloAnnotation {
             class,
             xmin,
             ymin,
             w,
             h,
+            confidence,
         }
     }
     /// for creating placeholder
@@ -120,15 +128,16 @@ impl YoloAnnotation {
             ymin: 10.0,
             w: 10.0,
             h: 10.0,
+            confidence: 0.5,
         }
     }
 }
 
 impl OutputFormat for YoloAnnotation {
-    fn to_yolo_vec(&self) -> std::result::Result<Vec<YoloAnnotation>, anyhow::Error> {
+    fn to_yolo_vec(&self) -> Result<Vec<YoloAnnotation>, anyhow::Error> {
         todo!()
     }
-    fn to_yolo(&self) -> std::result::Result<YoloAnnotation, anyhow::Error> {
+    fn to_yolo(&self) -> Result<YoloAnnotation, anyhow::Error> {
         // this might end very badly
         panic!("Invalid Operation , cannot convert `YoloAnnotation` to `YoloAnnotation`")
     }
@@ -137,8 +146,14 @@ impl OutputFormat for YoloAnnotation {
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
         inference_dimension: &(u32, u32),
-    ) -> std::result::Result<Vec<Shape>, anyhow::Error> {
-        todo!()
+    ) -> Result<Vec<Shape>, anyhow::Error> {
+        Ok(vec![Shape {
+            label: all_classes[self.class as usize].to_owned(),
+            points: vec![vec![self.xmin, self.ymin], vec![self.w, self.h]],
+            group_id: Some(self.confidence.to_string()),
+            shape_type: String::from("rectangle"),
+            flags: HashMap::new(),
+        }])
     }
     fn to_labelme(
         &self,
@@ -147,12 +162,12 @@ impl OutputFormat for YoloAnnotation {
         filename: &str,
         image_file: &DynamicImage,
         inference_dimension: &(u32, u32),
-    ) -> std::result::Result<LabelmeAnnotation, anyhow::Error> {
+    ) -> Result<LabelmeAnnotation, anyhow::Error> {
         todo!()
     }
 }
 
-#[derive(Debug, Clone,PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LabelmeAnnotation {
     pub version: String,
     pub flags: Option<HashMap<String, String>>,
@@ -198,6 +213,8 @@ impl LabelmeAnnotation {
                 ymin: y,
                 w: w,
                 h: h,
+                // TODO: IF ANYTHING GOES SHIT WITH YOLO CONVERTSION CHECK HERE
+                confidence: 1.0,
             };
             yolo_label_list.push(yolo_struct);
         }
@@ -206,6 +223,15 @@ impl LabelmeAnnotation {
 }
 
 /// parsed directrly from the json file eh
+///
+/// pub struct Shape {
+///    pub label: String,
+///    pub points: Vec<Vec<f32>>,
+///    pub group_id: Option<String>,
+///    pub shape_type: String,
+///    pub flags: HashMap<String, String>,
+///}
+///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
     pub label: String,
@@ -320,6 +346,7 @@ impl OutputFormat for Embeddings {
                     elm[2],        // xmax
                     elm[3],        // w
                     elm[4],        // h
+                    elm[6],
                 );
                 yolo_arr.push(res);
             }
@@ -362,11 +389,10 @@ pub fn read_labels_from_file(filename: &str) -> Result<LabelmeAnnotation, Error>
     Ok(read_json_to_struct)
 }
 
-
 #[cfg(test)]
 mod test_read_labels_from_file {
-    use crate::label::*;
     use crate::fileutils::*;
+    use crate::label::*;
 
     #[test]
     fn read_label_from_file() {
@@ -377,7 +403,6 @@ mod test_read_labels_from_file {
         assert_eq!(_read.imageWidth, 1024);
         assert_eq!(_read.imageHeight, 1024);
     }
-     
 
     #[test]
     fn yolo_from_labelme() {
@@ -385,9 +410,8 @@ mod test_read_labels_from_file {
         let _all_classes = get_all_classes(&_all_json).unwrap();
         let _all_classes_hash = get_all_classes_hash(&_all_classes).unwrap();
         let _read = read_labels_from_file("test/test.json").unwrap();
-        let _yolo = _read.to_yolo(&_all_classes_hash).unwrap();    
-        dbg!("yolo: {:?}", &_yolo);  
-        assert_eq!(_yolo.len(), 4); 
+        let _yolo = _read.to_yolo(&_all_classes_hash).unwrap();
+        dbg!("yolo: {:?}", &_yolo);
+        assert_eq!(_yolo.len(), 4);
     }
 }
-

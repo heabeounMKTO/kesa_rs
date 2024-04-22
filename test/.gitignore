@@ -1,5 +1,6 @@
 !test.json
 !test.png
 
+*.onnx
+*.torchscript
 
-!*/
