@@ -17,7 +17,7 @@ serde_derive = "1.0.181"
 serde_json = "1.0.104"
 serde_yaml = "0.9.25"
 sorted-list = "0.2.0"
-ort = { version = "2.0.0-alpha.4", features = ["tensorrt", "load-dynamic", "copy-dylibs", "download-binaries", "cuda"] }
+ort = { version = "2.0.0-alpha.4", optional=true,features = ["tensorrt", "load-dynamic", "copy-dylibs", "download-binaries", "cuda"] }
 base64 = "0.22.0"
 lazy_static = "1.4.0"
 plotters = "0.3.5"
@@ -30,6 +30,10 @@ half = "2.4.0"
 spinoff = "0.8.0"
 spinners = "4.1.1"
 uuid = { version = "1.8.0", features = ["v4"] }
+
+[features]
+onnxruntime = ["dep:ort"]
+
 
 [lib]
 name = "kesa"

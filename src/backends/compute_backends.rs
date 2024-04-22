@@ -4,6 +4,7 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 
 use super::candle_backend::CandleModel;
+#[cfg(feature ="onnx")]
 use super::onnx_backend::OnnxModel;
 use super::tch_backend::TchModel;
 
