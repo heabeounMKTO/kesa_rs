@@ -33,3 +33,14 @@ to build , run:
 ```bash
 cargo build --release
 ```
+by default, kesa_al currently won't work without a backend specified, enable it by passing a feature flag.
+```bash
+// enable onnxruntime backend
+cargo build --bin kesa_al --release --features onnxruntime
+
+// enable torch backend
+cargo build --bin kesa_al --release --features torch
+
+// enable both
+cargo build --bin kesa_al --release --features torch --features onnxruntime
+```
