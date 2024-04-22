@@ -93,7 +93,7 @@ impl Xyxy {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct YoloAnnotation {
     pub class: i64,
     pub xmin: f32,

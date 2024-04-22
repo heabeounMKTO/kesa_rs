@@ -1,7 +1,6 @@
 use anyhow::{Error, Result};
 use std::ffi::OsStr;
 use std::path::PathBuf;
-
 use crate::label::Embeddings;
 
 use super::candle_backend::CandleModel;
