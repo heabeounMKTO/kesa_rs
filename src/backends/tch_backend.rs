@@ -10,8 +10,6 @@ use tch::IValue;
 use tch::Tensor;
 use tch::{self, vision::image};
 
-
-
 pub struct TchModel {
     model: tch::CModule,
     device: tch::Device,
@@ -41,13 +39,12 @@ impl TchModel {
         let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
         println!(
             "warmup tensor list: {:?}",
-            self.non_max_suppression(&_toTensorList[0].get(0), 0.8,0.7)
+            self.non_max_suppression(&_toTensorList[0].get(0), 0.8, 0.7)
         );
         Ok(())
     }
 
-
-    /// for testing yolov5 models 
+    /// for testing yolov5 models
     pub fn warmupv5(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         img = img
@@ -61,22 +58,47 @@ impl TchModel {
         // todo!()
         Ok(())
     }
+    
+    
 
-    pub fn run(&self, image: &tch::Tensor, conf_thresh: f32, iou_thresh: f64) -> Result<(), Error> {
+    pub fn run(
+        &self,
+        image: &tch::Tensor,
+        conf_thresh: f64,
+        iou_thresh: f64,
+        yolo_version: &str,
+    ) -> Result<Vec<YoloAnnotation>, Error> {
         let mut img = tch::vision::image::resize(&image, self.w, self.h)?;
         img = img
             .unsqueeze(0)
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
-        let pred = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        let pred_T = tch::Tensor::try_from(pred)?;
-        println!("pred_t, {:?}", pred_T);
-        // todo!()
-        Ok(())
+        match yolo_version {
+            "yolov9" => {
+                let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+                println!("DEBUG: yolov9 pred {:?}", &pred);
+                let _toTensorList = Vec::<tch::Tensor>::try_from(pred)?;
+                let _transposed_o = _toTensorList[0].transpose(2,1);
+                
+                // println!("transposed: {:?}", _transposed_o);
+                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
+                println!("results:{:?}", &results);
+                Ok(vec![YoloAnnotation::dummy()])
+            }
+            _ => {
+                let pred = self.model.forward_ts(&[img])
+                                        .unwrap()
+                                        .to_device(self.device);
+                println!("DEBUG: yolov5 pred: {:?}", &pred);
+                let results = self.non_max_suppression(&pred.get(0), 
+                    conf_thresh, iou_thresh);
+                Ok(results)
+            },
+        }
     }
-    
-    fn iou(&self, b1: &YoloAnnotation, b2: &YoloAnnotation) -> f32 {
+
+    fn iou(&self, b1: &YoloAnnotation, b2: &YoloAnnotation) -> f64 {
         let b1_area = (b1.w - b1.xmin + 1.) * (b1.h - b1.ymin + 1.);
         let b2_area = (b2.w - b2.xmin + 1.) * (b2.h - b2.ymin + 1.);
         let i_xmin = b1.xmin.max(b2.xmin);
@@ -84,10 +106,81 @@ impl TchModel {
         let i_ymin = b1.ymin.max(b2.ymin);
         let i_h = b1.h.min(b2.h);
         let i_area = (i_w - i_xmin + 1.).max(0.) * (i_h - i_ymin + 1.).max(0.);
-        i_area / (b1_area + b2_area - i_area) 
+        (i_area / (b1_area + b2_area - i_area)) as f64
+    }
+    
+
+    fn nms_yolov9(
+        &self, 
+        pred: &Tensor,
+        conf_thresh: f64,
+        iou_thresh: f64
+    ) -> () {
+            // outputs [1, 56, 8400]
+        let (npreds, preds_size)  = pred.size2().unwrap();
+        let nclasses = (preds_size - 4) as usize;
+        println!("DEBUG: nclasses: {:?}", &nclasses);
+        println!("DEBUG npreds: {:?}", &npreds); 
+        let mut bboxes: Vec<Vec<YoloAnnotation>> = (0..nclasses).map(|_| vec![]).collect();
+
+        for index in 0..npreds {
+            let pred = Vec::<f64>::try_from(pred.get(index)).expect("cannot convert tensor to <f32>");
+            let confidence = pred[5];
+            // println!("Pred[5], {:?}", &confidence);
+            if confidence > conf_thresh {
+                let mut class_index = 0;
+                for i in 0..nclasses {
+                    if pred[4 + i] > pred[4 + class_index] {
+                        class_index = i;
+                    }
+                }
+                if pred[4 + class_index] > 0. {
+                    let bbox = YoloAnnotation {
+                        xmin: (pred[0] - pred[2] / 2.) as f32,
+                        ymin: (pred[1] - pred[3] / 2.) as f32,
+                        w: (pred[0] + pred[2] / 2.) as f32,
+                        h: (pred[1] + pred[3] / 2.) as f32,
+                        confidence: confidence as f32,
+                        class: class_index as i64,
+                    };
+                    bboxes[class_index].push(bbox);
+                }
+            }
+        }        // println!("DEBUG bboxes , {:?}", &bboxes);
+        for bboxes_for_class in bboxes.iter_mut() {
+            bboxes_for_class.sort_by(|b1, b2| b2.confidence.partial_cmp(&b1.confidence).unwrap());
+            let mut current_index = 0;
+            for index in 0..bboxes_for_class.len() {
+                let mut drop = false;
+                for prev_index in 0..current_index {
+                    let iou = self.iou(&bboxes_for_class[prev_index], &bboxes_for_class[index]);
+
+                    if iou > iou_thresh {
+                        drop = true;
+                        break;
+                    }
+                }
+                if !drop {
+                    bboxes_for_class.swap(current_index, index);
+                    current_index += 1;
+                }
+            }
+            bboxes_for_class.truncate(current_index);
+        }
+
+        let mut result = vec![];
+
+        for bboxes_for_class in bboxes.iter() {
+            for bbox in bboxes_for_class.iter() {
+                result.push(*bbox);
+            }
+        }
+        println!("Result: {:?}", &result);
     }
 
-       fn non_max_suppression(
+
+
+    fn non_max_suppression(
         &self,
         pred: &Tensor,
         conf_thresh: f64,
@@ -100,8 +193,7 @@ impl TchModel {
         for index in 0..npreds {
             let pred = Vec::<f64>::try_from(pred.get(index)).expect("cannot convert");
             let confidence = pred[4];
-
-            if confidence > conf_thresh {
+            if confidence  >= conf_thresh {
                 let mut class_index = 0;
 
                 for i in 0..nclasses {
@@ -110,9 +202,8 @@ impl TchModel {
                     }
                 }
                 if pred[5 + class_index] > 0. {
-
                     let bbox = YoloAnnotation {
-                        xmin: (pred[0] - pred[2] / 2. ) as f32,
+                        xmin: (pred[0] - pred[2] / 2.) as f32,
                         ymin: (pred[1] - pred[3] / 2.) as f32,
                         w: (pred[0] + pred[2] / 2.) as f32,
                         h: (pred[1] + pred[3] / 2.) as f32,
@@ -120,11 +211,10 @@ impl TchModel {
                         class: class_index as i64,
                     };
                     bboxes[class_index].push(bbox);
-
                 }
-
             }
         }
+        // println!("DEBUG bboxes , {:?}", &bboxes);
         for bboxes_for_class in bboxes.iter_mut() {
             bboxes_for_class.sort_by(|b1, b2| b2.confidence.partial_cmp(&b1.confidence).unwrap());
             let mut current_index = 0;
@@ -133,7 +223,7 @@ impl TchModel {
                 for prev_index in 0..current_index {
                     let iou = self.iou(&bboxes_for_class[prev_index], &bboxes_for_class[index]);
 
-                    if iou > iou_thresh as f32 {
+                    if iou > iou_thresh {
                         drop = true;
                         break;
                     }
@@ -155,5 +245,5 @@ impl TchModel {
         }
         println!("Result: {:?}", &result);
         result
-    } 
+    }
 }
