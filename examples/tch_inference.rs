@@ -4,7 +4,8 @@ use anyhow::{bail, Error, Result};
 use kesa::{backends::tch_backend::{self, TchModel}, image_utils};
 fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error> {
     let cuda = device.unwrap_or(tch::Device::cuda_if_available());
-    let loaded_model = TchModel::new(&input, 640, 640, tch::Device::Cpu);
+    let loaded_model = TchModel::new(&input, 640, 640, cuda);
+    
     // for n in 0..3 {
     //     loaded_model.warmup()?;
     // }

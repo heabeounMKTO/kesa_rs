@@ -69,7 +69,7 @@ impl TchModel {
         yolo_version: &str,
     ) -> Result<Vec<YoloAnnotation>, Error> {
         // let mut img = tch::vision::image::resize(&image, self.w, self.h)?;
-        let img = image; 
+        let img = image.to_kind(tch::Kind::Float).to_device(self.device); 
             // .unsqueeze(0)
             // .to_kind(tch::Kind::Float)
             // .to_device(self.device)
@@ -134,7 +134,7 @@ impl TchModel {
         let mut bboxes: Vec<Vec<YoloAnnotation>> = (0..nclasses).map(|_| vec![]).collect();
         println!("bboxes: {:?}", &bboxes);
         for index in 0..npreds {
-            let pred = Vec::<f32>::try_from(pred.get(index)).expect("cannot convert tensor to <f32>");
+            let pred = Vec::<f32>::try_from(pred.get(index))?;
             let confidence = *pred[5..].iter().max_by(|x, y| x.total_cmp(y)).unwrap();
             // println!("Pred[5], {:?}", &confidence);
             if confidence > conf_thresh {
