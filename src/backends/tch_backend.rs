@@ -29,8 +29,7 @@ impl TchModel {
         }
     }
 
-
-    /// forward pass with zeroes 
+    /// forward pass with zeroes
     pub fn warmup(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         img = img
@@ -63,16 +62,18 @@ impl TchModel {
         conf_thresh: f32,
         iou_thresh: f32,
         yolo_version: &str,
-    ) -> Result<Vec<YoloAnnotation>, Error>{
+    ) -> Result<Vec<YoloAnnotation>, Error> {
         let img = image.to_kind(tch::Kind::Half).to_device(self.device);
         match yolo_version {
             "yolov9" => {
-                let pred = self.model.forward_ts(&[img])
-                                     .unwrap()
-                                     .to_device(self.device);
-                let _transposed_o = pred.transpose(2,1);
-                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh) 
-            } ,
+                let pred = self
+                    .model
+                    .forward_ts(&[img])
+                    .unwrap()
+                    .to_device(self.device);
+                let _transposed_o = pred.transpose(2, 1);
+                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh)
+            }
             _ => {
                 todo!()
             }

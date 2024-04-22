@@ -134,10 +134,10 @@ impl YoloAnnotation {
 }
 
 impl OutputFormat for YoloAnnotation {
-    fn to_yolo_vec(&self) -> std::result::Result<Vec<YoloAnnotation>, anyhow::Error> {
+    fn to_yolo_vec(&self) -> Result<Vec<YoloAnnotation>, anyhow::Error> {
         todo!()
     }
-    fn to_yolo(&self) -> std::result::Result<YoloAnnotation, anyhow::Error> {
+    fn to_yolo(&self) -> Result<YoloAnnotation, anyhow::Error> {
         // this might end very badly
         panic!("Invalid Operation , cannot convert `YoloAnnotation` to `YoloAnnotation`")
     }
@@ -146,8 +146,14 @@ impl OutputFormat for YoloAnnotation {
         all_classes: &Vec<String>,
         original_dimension: &(u32, u32),
         inference_dimension: &(u32, u32),
-    ) -> std::result::Result<Vec<Shape>, anyhow::Error> {
-        todo!()
+    ) -> Result<Vec<Shape>, anyhow::Error> {
+        Ok(vec![Shape {
+            label: all_classes[self.class as usize].to_owned(),
+            points: vec![vec![self.xmin, self.ymin], vec![self.w, self.h]],
+            group_id: Some(self.confidence.to_string()),
+            shape_type: String::from("rectangle"),
+            flags: HashMap::new(),
+        }])
     }
     fn to_labelme(
         &self,
@@ -156,7 +162,7 @@ impl OutputFormat for YoloAnnotation {
         filename: &str,
         image_file: &DynamicImage,
         inference_dimension: &(u32, u32),
-    ) -> std::result::Result<LabelmeAnnotation, anyhow::Error> {
+    ) -> Result<LabelmeAnnotation, anyhow::Error> {
         todo!()
     }
 }
@@ -217,6 +223,14 @@ impl LabelmeAnnotation {
 }
 
 /// parsed directrly from the json file eh
+///
+/// pub struct Shape {
+///    pub label: String,
+///    pub points: Vec<Vec<f32>>,
+///    pub group_id: Option<String>,
+///    pub shape_type: String,
+///    pub flags: HashMap<String, String>,
+///}
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
