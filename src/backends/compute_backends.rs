@@ -4,8 +4,11 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 
 use super::candle_backend::CandleModel;
-#[cfg(feature = "onnx")]
+#[cfg(feature = "onnxruntime")]
 use super::onnx_backend::OnnxModel;
+
+
+#[cfg(feature = "torch")]
 use super::tch_backend::TchModel;
 
 #[derive(Debug, Clone)]

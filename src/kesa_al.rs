@@ -8,7 +8,7 @@ mod plotting;
 mod splash;
 use crate::{
     backends::{
-        candle_backend::CandleModel, compute_backends::InferenceModel, tch_backend::TchModel,
+        candle_backend::CandleModel, compute_backends::InferenceModel,
     },
     fileutils::{get_all_images, write_labelme_to_json},
     label::LabelmeAnnotation,
@@ -19,8 +19,15 @@ use anyhow::{Error, Result};
 use backends::{
     compute_backends::{get_backend, ComputeBackendType},
 };
-#[cfg(feature = "onnx")]
+#[cfg(feature = "onnxruntime")]
 use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
+
+
+#[cfg(feature = "torch")]
+use backends::{
+ tch_backend::TchModel,
+};
+
 use clap::{ArgAction, Parser};
 use fileutils::{open_image, write_yolo_to_txt};
 use image::{DynamicImage, GenericImageView};
@@ -89,7 +96,7 @@ lazy_static! {
 fn main() -> Result<(), Error> {
     print_splash();
     println!("Running Autolabeling");
-    #[cfg(feature="onnx")]
+    #[cfg(feature="onnxruntime")]
     let init_onnx = init_onnx_backend()?;
     
     let args = CliArguments::parse();
@@ -116,8 +123,8 @@ fn main() -> Result<(), Error> {
     let model_type: ComputeBackendType = get_backend(&args.weights)?;
     println!("Detected model format : {:#?}", &model_type);
     match model_type {
-        _ => panic!("cannot infer model type!"),
-        #[cfg(feature="onnx")]
+
+        #[cfg(feature="onnxruntime")]
         ComputeBackendType::OnnxModel => {
             let load_model = load_onnx_model(
                 &args.weights,
@@ -173,9 +180,12 @@ fn main() -> Result<(), Error> {
         ComputeBackendType::CandleModel => {
             todo!()
         }
+
+        #[cfg(feature = "torch")]
         ComputeBackendType::TchModel => {
             todo!()
-        }
+        },
+        _ => panic!("cannot infer model type!"),
     };
     // draw_dummy_graph();
     Ok(())
