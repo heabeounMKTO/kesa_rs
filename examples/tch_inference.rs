@@ -14,6 +14,10 @@ use kesa::output;
 fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error> {
     let cuda = device.unwrap_or(tch::Device::cuda_if_available());
     let loaded_model = TchModel::new(&input, 640, 640, cuda);
+    for n in 0..4 {
+       loaded_model.warmupfp16()?;
+    } 
+
     let imgpath = "/media/hbpopos/penisf/275k_img/kesa_test/8s.jpeg";
     let _img2 = image::open(imgpath)?;
     let all_classes = vec![

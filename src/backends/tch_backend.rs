@@ -9,6 +9,11 @@ use tch::kind;
 use tch::IValue;
 use tch::Tensor;
 use tch::{self, vision::image};
+use half::f16;
+use tch::Kind;
+
+
+
 
 pub struct TchModel {
     model: tch::CModule,
@@ -20,7 +25,7 @@ pub struct TchModel {
 impl TchModel {
     pub fn new(weights: &str, w: i64, h: i64, device: tch::Device) -> TchModel {
         let mut model = tch::CModule::load_on_device(weights, device).unwrap();
-        model.set_eval();
+        // model.set_eval();
         TchModel {
             model: model,
             device: device,
@@ -28,6 +33,25 @@ impl TchModel {
             h: h,
         }
     }
+
+
+    /// forward pass with zeroes
+    pub fn warmupfp16(&self) -> Result<(), Error> {
+        // half cuda cos there aint any in tch  
+        // nhom kherng yerng ai >:(  
+        let HALF_CUDA: (Kind, tch::Device) = (Kind::Half, tch::Device::Cuda(0));
+        let mut img: Tensor = Tensor::zeros([3, 640, 640], HALF_CUDA);
+        img = img
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Half)
+            .to_device(self.device);
+        let t1 = std::time::Instant::now();
+        let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("warmup time: {:?}", t1.elapsed());
+        Ok(())
+    }
+
+
 
     /// forward pass with zeroes
     pub fn warmup(&self) -> Result<(), Error> {
@@ -37,7 +61,9 @@ impl TchModel {
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
+        let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("warmup time: {:?}", t1.elapsed());
         Ok(())
     }
 
@@ -72,7 +98,11 @@ impl TchModel {
                     .unwrap()
                     .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
-                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh)
+                let t1 = std::time::Instant::now();
+                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
+                println!("inference time: {:?}", t1.elapsed());
+                results
+
             }
             _ => {
                 todo!()
