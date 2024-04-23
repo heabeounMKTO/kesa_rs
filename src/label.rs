@@ -35,7 +35,7 @@ impl YoloBbox {
                 let new_xyxy: Xyxy = self
                     .xyxy
                     .to_normalized(img_size)
-                    .expect("YoloBbox: cannotconvert Screen -> Normalized");
+                    .expect("[error]::YoloBbox: cannotconvert Screen -> Normalized");
                 YoloBbox {
                     class: self.class,
                     xyxy: new_xyxy,
