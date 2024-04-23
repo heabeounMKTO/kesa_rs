@@ -34,7 +34,9 @@ impl TchModel {
     }
 
     /// forward pass with zeroes
-    pub fn warmupfp16(&self) -> Result<(), Error> {
+    pub fn warmup_gpu_fp16(&self) -> Result<(), Error> {
+        println!("[info]::torch_backend: running gpu fp16 warmup");
+
         // half cuda cos there aint any in tch
         // nhom kherng yerng ai >:(
         let HALF_CUDA: (Kind, tch::Device) = (Kind::Half, tch::Device::Cuda(0));
@@ -45,13 +47,29 @@ impl TchModel {
             .to_device(self.device);
         let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("warmup time: {:?}", t1.elapsed());
+        println!("[info]::torch_backend: warmup_gpu_fp16 time: {:?}", t1.elapsed());
+        Ok(())
+    }
+    
+    /// fp32 warmup on gpu 
+    pub fn warmup_gpu(&self) -> Result<(), Error> {
+        println!("[info]::torch_backend: running gpu warmup");
+        let FLOAT_CUDA: (Kind, tch::Device) = (Kind::Float, tch::Device::Cuda(0));
+        let mut img: Tensor = Tensor::zeros([3, 640, 640], FLOAT_CUDA);
+        img = img
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Float)
+            .to_device(self.device);
+        let t1 = std::time::Instant::now();
+        let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("[info]::torch_backend: warmup_gpu time: {:?}", t1.elapsed());
         Ok(())
     }
 
-    /// forward pass with zeroes
+    /// forward pass with zeroes , for CPU inference
     pub fn warmup(&self) -> Result<(), Error> {
-        let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
+        println!("[info]::torch_backend: running cpu warmup");
+        let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::FLOAT_CPU);
         img = img
             .unsqueeze(0)
             .to_kind(tch::Kind::Float)
@@ -59,11 +77,11 @@ impl TchModel {
             .g_div_scalar(255.0);
         let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("warmup time: {:?}", t1.elapsed());
+        println!("[info]::torch_backend: warmup time: {:?}", t1.elapsed());
         Ok(())
     }
 
-    /// for testing yolov5 models
+    /// [testing only] for testing yolov5 models
     pub fn warmupv5(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         img = img

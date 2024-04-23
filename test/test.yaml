@@ -55,3 +55,4 @@ nc: 52
 train: ../export_l2y_test/train/images
 val: ../export_l2y_test/val/images
 test: ../export_l2y_test/test/images
+model_version: yolov9

@@ -21,7 +21,7 @@ use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
 #[cfg(feature = "torch")]
 use backends::tch_backend::TchModel;
 #[cfg(feature = "torch")]
-use tch::Device;
+use tch::Device::{Cuda, Cpu};
 
 use clap::{ArgAction, Parser};
 use fileutils::{open_image, write_yolo_to_txt};
@@ -51,17 +51,23 @@ struct CliArguments {
     ///
     sort: bool,
 
-    #[arg(long, action=ArgAction::SetFalse)]
-    /// fp16 inference , for GPUs only !
+    #[arg(long, action=ArgAction::SetTrue)]
+    /// fp16 inference,
+    /// for torch backend
+    /// , for GPUs only !
     fp_16: bool,
+            
+    #[arg(long)]
+    /// compute device 
+    /// input cpu or 0 1 2 etc for gpus
+    device: Option<u32>,
 
     #[arg(long)]
     /// inference image size of the
     /// model provided
     imgsize: u32,
 
-    // SetFlase means true :|
-    #[arg(long, action=ArgAction::SetFalse)]
+    #[arg(long, action=ArgAction::SetTrue)]
     /// if supplied ,
     /// outputs yolo txt files
     /// instead of LabelMe jsons
@@ -96,7 +102,12 @@ fn main() -> Result<(), Error> {
         Some(ref i64) => args.workers,
         None => Some(2),
     };
-
+    #[cfg(feature="torch")] 
+    let device: tch::Device = match &args.device {
+        Some(ref u32) => tch::Device::Cuda(args.device.unwrap() as usize),
+        None => tch::Device::Cpu 
+    };
+        
     let front_sort_dir = format!("{}/front", &args.folder);
     let back_sort_dir = format!("{}/back", &args.folder);
 
@@ -169,21 +180,49 @@ fn main() -> Result<(), Error> {
                 }
             });
             prog.finish_with_message("\nLabeling done!");
-        }
+        },
         ComputeBackendType::CandleModel => {
             todo!()
         }
 
         #[cfg(feature = "torch")]
         ComputeBackendType::TchModel => {
-            let cuda = tch::Device::cuda_if_available();
-            let torch_model = TchModel::new(
+        let torch_model = TchModel::new(
                 &args.weights,
                 args.imgsize.to_owned() as i64,
                 args.imgsize.to_owned() as i64,
-                cuda,
+                device,
             );
             println!("[info]::kesa_al: torch_model {:#?}", &torch_model);
+                match &torch_model.device {
+                    tch::Device::Cuda(0) => {
+                        match &args.fp_16 {
+                            true => {
+                                torch_model.warmup_gpu_fp16();
+                            },
+                            false => {
+                                torch_model.warmup_gpu()?;
+                            }
+                        }
+                    },
+                    tch::Device::Cpu => {
+                        torch_model.warmup()?;
+                    },
+                    _ => {
+                        todo!()
+                    }
+                }
+            let prog = ProgressBar::new(all_imgs.to_owned().len() as u64);
+            // all_imgs.par_iter().for_each(|image_path| {
+            //         let orig_img = open_image(&image_path);
+            //         match orig_img {
+            //             Ok(orig_img) => {
+            //                 let input_img = orig_img.clone();
+            //                 let detections = torch_model.run(input_img);
+            //             }
+            //         }
+            //     });
+
             todo!()
         }
         _ => panic!("[error]::kesa_al: cannot infer model type!"),
@@ -217,7 +256,7 @@ fn process_results(
 ) -> Result<(), Error> {
     let img_pathbuf = PathBuf::from(&image_path);
     match &txt {
-        true => {
+        false => {
             let res_labelme: LabelmeAnnotation = results.to_labelme(
                 all_classes,
                 &original_image.dimensions(),
@@ -227,7 +266,7 @@ fn process_results(
             )?;
             write_labelme_to_json(&res_labelme, &img_pathbuf)?
         }
-        false => {
+        true => {
             let res_yolo: Vec<YoloAnnotation> = results.to_yolo_vec()?;
             write_yolo_to_txt(res_yolo, &img_pathbuf)?;
         }
