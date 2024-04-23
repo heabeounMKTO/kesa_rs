@@ -12,7 +12,6 @@ use tch::Kind;
 use tch::Tensor;
 use tch::{self, vision::image};
 
-
 #[derive(Debug)]
 pub struct TchModel {
     pub model: tch::CModule,
@@ -47,11 +46,14 @@ impl TchModel {
             .to_device(self.device);
         let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("[info]::torch_backend: warmup_gpu_fp16 time: {:?}", t1.elapsed());
+        println!(
+            "[info]::torch_backend: warmup_gpu_fp16 time: {:?}",
+            t1.elapsed()
+        );
         Ok(())
     }
-    
-    /// fp32 warmup on gpu 
+
+    /// fp32 warmup on gpu
     pub fn warmup_gpu(&self) -> Result<(), Error> {
         println!("[info]::torch_backend: running gpu warmup");
         let FLOAT_CUDA: (Kind, tch::Device) = (Kind::Float, tch::Device::Cuda(0));

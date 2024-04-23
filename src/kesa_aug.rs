@@ -65,7 +65,11 @@ fn main() -> Result<(), Error> {
         .num_threads(workers.unwrap().try_into().unwrap())
         .build_global()
         .unwrap();
-    let mut spinner0 = Spinner::new(spinners::Hearts, "[info]::kesa_aug: collecting jsons..", Color::White);
+    let mut spinner0 = Spinner::new(
+        spinners::Hearts,
+        "[info]::kesa_aug: collecting jsons..",
+        Color::White,
+    );
     let all_json = get_all_jsons(&args.folder)?;
     let all_classes = get_all_classes(&all_json)?;
     let classes_hash = get_all_classes_hash(&all_classes)?;

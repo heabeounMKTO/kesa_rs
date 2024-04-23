@@ -6,7 +6,7 @@ use kesa::{
     backends::tch_backend::{self, TchModel},
     fileutils::get_config_from_name,
     image_utils,
-    label::{Shape, YoloAnnotation, LabelmeAnnotation},
+    label::{LabelmeAnnotation, Shape, YoloAnnotation},
     output::OutputFormat,
 };
 
@@ -31,10 +31,16 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
     let mut _pimg2 = tch::Tensor::try_from(preproc_img)?;
     println!("pimg2 {:?}", _img2.dimensions());
     let mut test_inf = loaded_model.run_fp16(&_pimg2, 0.7, 0.6, "yolov9")?;
-    let uhhh = test_inf[0].to_normalized(&(640, 640)).to_screen(&(690, 1035)).to_shape(&_ac, &(690, 1035))?;
+    let uhhh = test_inf[0]
+        .to_normalized(&(640, 640))
+        .to_screen(&(690, 1035))
+        .to_shape(&_ac, &(690, 1035))?;
     let _2vec: Vec<Shape> = vec![uhhh];
     let _lm: LabelmeAnnotation = LabelmeAnnotation::from_shape_vec(imgpath, &_img2, &_2vec)?;
-    println!("labelme anno w:{:?} h:{:?}", _lm.imageWidth, _lm.imageHeight);
+    println!(
+        "labelme anno w:{:?} h:{:?}",
+        _lm.imageWidth, _lm.imageHeight
+    );
     Ok(loaded_model)
 }
 

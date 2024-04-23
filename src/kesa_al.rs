@@ -21,9 +21,9 @@ use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
 #[cfg(feature = "torch")]
 use backends::tch_backend::TchModel;
 #[cfg(feature = "torch")]
-use tch::Device::{Cuda, Cpu};
+use tch::Device::{Cpu, Cuda};
 
-use clap::{ArgAction, Parser};
+use clap::{ArgAction, Parser,Args };
 use fileutils::{open_image, write_yolo_to_txt};
 use image::{DynamicImage, GenericImageView};
 use indicatif::ProgressBar;
@@ -56,16 +56,16 @@ struct CliArguments {
     /// for torch backend
     /// , for GPUs only !
     fp_16: bool,
-            
+
     #[arg(long)]
-    /// compute device 
+    /// compute device
     /// input cpu or 0 1 2 etc for gpus
     device: Option<u32>,
 
-    #[arg(long)]
+    #[arg(long, num_args(2))]
     /// inference image size of the
     /// model provided
-    imgsize: u32,
+    imgsize: Vec<u32>,
 
     #[arg(long, action=ArgAction::SetTrue)]
     /// if supplied ,
@@ -86,10 +86,12 @@ struct CliArguments {
     weights: String,
 }
 
+
+
 lazy_static! {
-    pub static ref IMG_SIZE: u32 = {
+    pub static ref IMG_SIZE: (u32, u32) = {
         let args = CliArguments::parse();
-        let imgsz = args.imgsize;
+        let imgsz = (args.imgsize[0] as u32 , args.imgsize[1] as u32);
         imgsz
     };
 }
@@ -102,12 +104,12 @@ fn main() -> Result<(), Error> {
         Some(ref i64) => args.workers,
         None => Some(2),
     };
-    #[cfg(feature="torch")] 
+    #[cfg(feature = "torch")]
     let device: tch::Device = match &args.device {
-        Some(ref u32) => tch::Device::Cuda(args.device.unwrap() as usize),
-        None => tch::Device::Cpu 
+        Some(ref fuck) => tch::Device::Cuda(args.device.unwrap() as usize),
+        None => tch::Device::Cpu,
     };
-        
+
     let front_sort_dir = format!("{}/front", &args.folder);
     let back_sort_dir = format!("{}/back", &args.folder);
 
@@ -124,9 +126,11 @@ fn main() -> Result<(), Error> {
         .unwrap();
     let all_imgs = get_all_images(&args.folder);
     let model_type: ComputeBackendType = get_backend(&args.weights)?;
-    println!("[info]::kesa_al: detected model format : {:#?}", &model_type);
+    println!(
+        "[info]::kesa_al: detected model format : {:#?}",
+        &model_type
+    );
     match model_type {
-
         #[cfg(feature = "onnxruntime")]
         ComputeBackendType::OnnxModel => {
             let init_onnx = init_onnx_backend()?;
@@ -175,55 +179,74 @@ fn main() -> Result<(), Error> {
                         prog.inc(1);
                     }
                     Err(e) => {
-                        eprintln!("cannot open image,\nError: {:?}", e);
+                        eprintln!("[error]::kesa_al: cannot open image,\nError: {:?}", e);
                     }
                 }
             });
             prog.finish_with_message("\nLabeling done!");
-        },
+        }
         ComputeBackendType::CandleModel => {
             todo!()
         }
 
         #[cfg(feature = "torch")]
         ComputeBackendType::TchModel => {
-        let torch_model = TchModel::new(
+            let torch_model = TchModel::new(
                 &args.weights,
-                args.imgsize.to_owned() as i64,
-                args.imgsize.to_owned() as i64,
+                args.imgsize[0].to_owned() as i64,
+                args.imgsize[1].to_owned() as i64,
                 device,
             );
             println!("[info]::kesa_al: torch_model {:#?}", &torch_model);
-                match &torch_model.device {
-                    tch::Device::Cuda(0) => {
-                        match &args.fp_16 {
-                            true => {
-                                torch_model.warmup_gpu_fp16();
-                            },
-                            false => {
-                                torch_model.warmup_gpu()?;
-                            }
+            match &torch_model.device {
+                tch::Device::Cuda(_) => match &args.fp_16 {
+                    true => {
+                        torch_model.warmup_gpu_fp16();
+                    }
+                    false => {
+                        torch_model.warmup_gpu()?;
+                    }
+                },
+                tch::Device::Cpu => {
+                    torch_model.warmup()?;
+                }
+                _ => {
+                    todo!()
+                }
+            }
+            let prog = ProgressBar::new(all_imgs.to_owned().len() as u64);
+            all_imgs.par_iter().for_each(|image_path| {
+                let orig_img = open_image(&image_path);
+                match orig_img {
+                    Ok(orig_img) => {
+                        match &torch_model.device {
+                                tch::Device::Cuda(_) => match &args.fp_16 {
+                                    true => {
+                                        let preproc_img = image_utils::preprocess_imagef16(&orig_img.clone(), 640).expect("[error]::kesa_al: unable to preprocess image");
+                                        let mut _input_tensor = tch::Tensor::try_from(preproc_img).expect("[error]::kesa_al: cannot convert preprocessed image to tensor");
+                                        let detections = torch_model.run_fp16(&_input_tensor, 0.8, 0.6, "yolov9").expect("[error]::kesa_al: error getting detections!");
+                                        println!("detections: {:#?}", &detections);
+                                    },
+                                    false => {
+                                        todo!()
+                                    }
+                                },
+                                tch::Device::Cpu => {
+                                    todo!()
+                                },
+                                _ => {
+                                    todo!()
+                                }
+
                         }
                     },
-                    tch::Device::Cpu => {
-                        torch_model.warmup()?;
-                    },
-                    _ => {
-                        todo!()
+                    Err(e) => {
+                        eprintln!("[error]::kesa_al: cannot open image,\nError: {:?}", e);
                     }
                 }
-            let prog = ProgressBar::new(all_imgs.to_owned().len() as u64);
-            // all_imgs.par_iter().for_each(|image_path| {
-            //         let orig_img = open_image(&image_path);
-            //         match orig_img {
-            //             Ok(orig_img) => {
-            //                 let input_img = orig_img.clone();
-            //                 let detections = torch_model.run(input_img);
-            //             }
-            //         }
-            //     });
+            });
 
-            todo!()
+            prog.finish_with_message("\nLabeling done!");
         }
         _ => panic!("[error]::kesa_al: cannot infer model type!"),
     };
@@ -262,7 +285,7 @@ fn process_results(
                 &original_image.dimensions(),
                 image_path.to_owned().as_str(),
                 &original_image,
-                &(*IMG_SIZE, *IMG_SIZE),
+                &(IMG_SIZE.0, IMG_SIZE.1),
             )?;
             write_labelme_to_json(&res_labelme, &img_pathbuf)?
         }

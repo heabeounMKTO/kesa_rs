@@ -51,13 +51,20 @@ fn main() -> Result<(), Error> {
     // TODO: put split portions
     let export_options = ExportFolderOptions::new(export.unwrap().as_str(), 0.7)?;
     println!("Export Options: {:#?}", &export_options);
-    let mut spinner0 = Spinner::new(spinners::Hearts, "[info]::kesa_l2y: creating export paths", Color::White);
+    let mut spinner0 = Spinner::new(
+        spinners::Hearts,
+        "[info]::kesa_l2y: creating export paths",
+        Color::White,
+    );
     export_options.create_folders()?;
     spinner0.success("[info]::kesa_l2y: created export paths");
 
     let mut spinner = Spinner::new(
         spinners::Hearts,
-        format!("[info]::kesa_l2y: searching for .json files in {:?}", &args.folder),
+        format!(
+            "[info]::kesa_l2y: searching for .json files in {:?}",
+            &args.folder
+        ),
         Color::White,
     );
     let all_json = get_all_jsons(&args.folder)?;
