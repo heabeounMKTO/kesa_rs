@@ -129,7 +129,7 @@ fn move_txt_files(
             }
         }
     }
-    prog.finish_with_message("files moved !\n");
-    println!("files moving done!");
+    prog.finish_with_message("[info]::kesa_split: files moved !\n");
+    println!("[info]::kesa_split: files moving done!");
     Ok(())
 }

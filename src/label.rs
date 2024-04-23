@@ -1,8 +1,8 @@
 /* anything that's label related */
-use crate::image_utils::dynimg2string;
+use crate::image_utils::{dynimg2string, dynimg2string_png};
 use crate::output::OutputFormat;
-use anyhow::{Error, Result};
-use image::DynamicImage;
+use anyhow::{bail, Error, Result};
+use image::{DynamicImage, GenericImageView};
 use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -10,85 +10,91 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-/// yolo outputs bbox 
+/// yolo outputs bbox
 #[derive(Debug, Clone, Copy)]
 pub struct YoloBbox {
     pub class: i64,
     pub xyxy: Xyxy,
-    pub confidence: f32
+    pub confidence: f32,
 }
 
 impl YoloBbox {
-    pub fn new(class: i64, 
-               xyxy: Xyxy,
-                confidence: f32) -> YoloBbox {
+    pub fn new(class: i64, xyxy: Xyxy, confidence: f32) -> YoloBbox {
         YoloBbox {
             class,
             xyxy,
-            confidence
+            confidence,
         }
     }
     /// converts to normalized coords
-    /// checks if type is alreadyvalid 
-    pub fn to_normalized(&mut self, img_size: (usize, usize)) -> Self {
-        let _normalized = match self.xyxy.coordinate_type {
+    /// img_size is (w, h)
+    /// checks if type is alreadyvalid
+    pub fn to_normalized(&mut self, img_size: &(u32, u32)) -> Self {
+        match self.xyxy.coordinate_type {
             CoordinateType::Screen => {
-                let new_xyxy: Xyxy = Xyxy {
-                    coordinate_type: CoordinateType::Normalized,
-                    x1: self.xyxy.x1 / img_size.0 as f32,
-                    y1: self.xyxy.y1 / img_size.1 as f32,
-                    x2: self.xyxy.x2 / img_size.0 as f32,
-                    y2: self.xyxy.y2 / img_size.1 as f32
-                };
+                let new_xyxy: Xyxy = self
+                    .xyxy
+                    .to_normalized(img_size)
+                    .expect("YoloBbox: cannotconvert Screen -> Normalized");
                 YoloBbox {
                     class: self.class,
                     xyxy: new_xyxy,
-                    confidence: self.confidence
+                    confidence: self.confidence,
                 }
-            } ,
-            CoordinateType::Normalized => {
-                YoloBbox {
-                    class: self.class,
-                    xyxy: self.xyxy,
-                    confidence: self.confidence
-                } 
             }
-        };
-        _normalized
+            CoordinateType::Normalized => YoloBbox {
+                class: self.class,
+                xyxy: self.xyxy,
+                confidence: self.confidence,
+            },
+        }
     }
 
     /// screen coords
-    pub fn to_screen(&mut self, img_size: (usize, usize)) -> Self {
-        let _normalized = match self.xyxy.coordinate_type {
-        CoordinateType::Screen => {
+    /// img_size is (w, h)
+    pub fn to_screen(&mut self, img_size: &(u32, u32)) -> Self {
+        match self.xyxy.coordinate_type {
+            CoordinateType::Screen => YoloBbox {
+                class: self.class,
+                xyxy: self.xyxy,
+                confidence: self.confidence,
+            },
+            CoordinateType::Normalized => {
+                let new_xyxy: Xyxy = self
+                    .xyxy
+                    .to_screen(img_size)
+                    .expect("[error]::YoloBbox: cannot convert Normalized -> Screen");
                 YoloBbox {
                     class: self.class,
-                    xyxy: self.xyxy,
-                    confidence: self.confidence
-                }
-        },
-        CoordinateType::Normalized => {
-        let new_xyxy: Xyxy = Xyxy {     
-                coordinate_type: CoordinateType::Screen,
-                x1: self.xyxy.x1 * img_size.0 as f32,
-                y1: self.xyxy.y1 * img_size.1 as f32,
-                x2: self.xyxy.x2 * img_size.0 as f32,
-                y2: self.xyxy.y2 * img_size.1 as f32
-            };
-
-            YoloBbox {
-                    class: self.class,
                     xyxy: new_xyxy,
-                    confidence: self.confidence
+                    confidence: self.confidence,
+                }
             }
         }
-    };
-        _normalized
+    }
+
+    pub fn to_shape(
+        &mut self,
+        all_classes: &Vec<String>,
+        original_dimension: &(u32, u32),
+    ) -> Result<Shape, Error> {
+        match self.xyxy.coordinate_type {
+            CoordinateType::Screen => Ok(Shape {
+                label: all_classes[self.class as usize].to_owned(),
+                points: vec![
+                    vec![self.xyxy.x1, self.xyxy.y1],
+                    vec![self.xyxy.x2, self.xyxy.y2],
+                ],
+                group_id: Some(self.confidence.to_string()),
+                shape_type: String::from("rectangle"),
+                flags: HashMap::new(),
+            }),
+            CoordinateType::Normalized => {
+                bail!("[error]::YoloBBox: please convert coordinate type to screen first ! (using YoloBBox::to_screen)")
+            }
+        }
     }
 }
-
-
-
 
 #[derive(Debug)]
 pub struct Xywh {
@@ -173,9 +179,7 @@ impl Xyxy {
     }
 }
 
-
-
-/// yolo txt export format 
+/// yolo txt export format
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct YoloAnnotation {
     pub class: i64,
@@ -214,8 +218,6 @@ impl YoloAnnotation {
             confidence: 0.5,
         }
     }
-
-
 }
 
 impl OutputFormat for YoloAnnotation {
@@ -277,6 +279,22 @@ impl LabelmeAnnotation {
         }
         Ok(all_xyxys)
     }
+    // from screen shapes 
+    pub fn from_shape_vec(filename: &str, image_file: &DynamicImage, shapes: &Vec<Shape>) -> Result<LabelmeAnnotation, Error> {
+       let version: String = String::from("5.1.1");
+        let _file = PathBuf::from(&filename);
+        let flags: HashMap<String, String> = HashMap::new();
+        let base64img: String = dynimg2string_png(image_file)?;
+        Ok(LabelmeAnnotation { 
+            version,
+            flags: Some(flags),
+            shapes: shapes.to_owned(),
+            imageWidth: image_file.dimensions().0.to_owned() as i64,
+            imageHeight: image_file.dimensions().1.to_owned() as i64,
+            imageData: base64img,
+            imagePath: _file.file_name().unwrap().to_string_lossy().to_string()
+        }) 
+    }
 
     pub fn update_shapes(&mut self) {
         todo!()
@@ -309,13 +327,13 @@ impl LabelmeAnnotation {
 
 /// parsed directrly from the json file eh
 ///
-/// pub struct Shape {
-///    pub label: String,
-///    pub points: Vec<Vec<f32>>,
-///    pub group_id: Option<String>,
-///    pub shape_type: String,
-///    pub flags: HashMap<String, String>,
-///}
+/// `Shape {
+///    label: String,
+///    points: Vec<Vec<f32>>,
+///    group_id: Option<String>,
+///    shape_type: String,
+///    flags: HashMap<String, String>,
+///  }`
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
@@ -350,7 +368,7 @@ pub enum ShapeType {
     Mask,
 }
 
-#[derive(Debug, Clone , Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum CoordinateType {
     Screen,
     Normalized,

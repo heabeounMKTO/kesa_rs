@@ -20,6 +20,8 @@ use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
 
 #[cfg(feature = "torch")]
 use backends::tch_backend::TchModel;
+#[cfg(feature = "torch")]
+use tch::Device;
 
 use clap::{ArgAction, Parser};
 use fileutils::{open_image, write_yolo_to_txt};
@@ -111,8 +113,9 @@ fn main() -> Result<(), Error> {
         .unwrap();
     let all_imgs = get_all_images(&args.folder);
     let model_type: ComputeBackendType = get_backend(&args.weights)?;
-    println!("Detected model format : {:#?}", &model_type);
+    println!("[info]::kesa_al: detected model format : {:#?}", &model_type);
     match model_type {
+
         #[cfg(feature = "onnxruntime")]
         ComputeBackendType::OnnxModel => {
             let init_onnx = init_onnx_backend()?;
@@ -122,7 +125,7 @@ fn main() -> Result<(), Error> {
                 false,
                 None,
             )?;
-            println!("leme get a uhh : {:?}", &load_model.model);
+            println!("[info]::kesa_al: onnx_model {:#?}", &load_model.model);
             let prog = ProgressBar::new(all_imgs.to_owned().len() as u64);
             all_imgs.par_iter().for_each(|image_path| {
                 let orig_img = open_image(&image_path);
@@ -173,9 +176,17 @@ fn main() -> Result<(), Error> {
 
         #[cfg(feature = "torch")]
         ComputeBackendType::TchModel => {
+            let cuda = tch::Device::cuda_if_available();
+            let torch_model = TchModel::new(
+                &args.weights,
+                args.imgsize.to_owned() as i64,
+                args.imgsize.to_owned() as i64,
+                cuda,
+            );
+            println!("[info]::kesa_al: torch_model {:#?}", &torch_model);
             todo!()
         }
-        _ => panic!("cannot infer model type!"),
+        _ => panic!("[error]::kesa_al: cannot infer model type!"),
     };
     // draw_dummy_graph();
     Ok(())

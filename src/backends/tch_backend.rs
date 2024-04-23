@@ -1,5 +1,5 @@
 use crate::label::Xyxy;
-use crate::label::{YoloBbox, CoordinateType};
+use crate::label::{CoordinateType, YoloBbox};
 use anyhow::bail;
 use anyhow::{Error, Result};
 use conv::TryInto;
@@ -12,11 +12,13 @@ use tch::Kind;
 use tch::Tensor;
 use tch::{self, vision::image};
 
+
+#[derive(Debug)]
 pub struct TchModel {
-    model: tch::CModule,
-    device: tch::Device,
-    w: i64,
-    h: i64,
+    pub model: tch::CModule,
+    pub device: tch::Device,
+    pub w: i64,
+    pub h: i64,
 }
 
 impl TchModel {
@@ -92,9 +94,9 @@ impl TchModel {
                     .unwrap()
                     .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
-                let t1 = std::time::Instant::now();
+                // let t1 = std::time::Instant::now();
                 let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
-                println!("inference time: {:?}", t1.elapsed());
+                // println!("inference time: {:?}", t1.elapsed());
                 results
             }
             _ => {
@@ -174,18 +176,17 @@ impl TchModel {
                 // you can normalize these coordinates [x,y]/640 then multiply
                 // it by its dimension i.e [x, y]*[imagewidth, imageheight]
                 if pred[4 + class_index] > 0. {
-
                     let xyxy: Xyxy = Xyxy {
                         coordinate_type: CoordinateType::Screen,
                         x1: (pred[0] - pred[2] / 2.0),
                         y1: (pred[1] - pred[3] / 2.0),
                         x2: (pred[0] + pred[2] / 2.0),
-                        y2: (pred[0] + pred[3] / 2.0)
+                        y2: (pred[0] + pred[3] / 2.0),
                     };
                     let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
                         xyxy: xyxy,
-                        confidence: confidence
+                        confidence: confidence,
                     };
                     bboxes[class_index].push(bbox);
                 }
@@ -249,12 +250,12 @@ impl TchModel {
                         x1: (pred[0] - pred[2] / 2.0),
                         y1: (pred[1] - pred[3] / 2.0),
                         x2: (pred[0] + pred[2] / 2.0),
-                        y2: (pred[0] + pred[3] / 2.0)
+                        y2: (pred[0] + pred[3] / 2.0),
                     };
                     let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
                         xyxy: xyxy,
-                        confidence: confidence
+                        confidence: confidence,
                     };
                     bboxes[class_index].push(bbox);
                 }

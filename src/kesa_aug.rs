@@ -65,11 +65,11 @@ fn main() -> Result<(), Error> {
         .num_threads(workers.unwrap().try_into().unwrap())
         .build_global()
         .unwrap();
-    let mut spinner0 = Spinner::new(spinners::Hearts, "collecting jsons..", Color::White);
+    let mut spinner0 = Spinner::new(spinners::Hearts, "[info]::kesa_aug: collecting jsons..", Color::White);
     let all_json = get_all_jsons(&args.folder)?;
     let all_classes = get_all_classes(&all_json)?;
     let classes_hash = get_all_classes_hash(&all_classes)?;
-    spinner0.success(format!("found {:?} json files", &all_json.len()).as_str());
+    spinner0.success(format!("[info]::kesa_aug: found {:?} json files", &all_json.len()).as_str());
     let prog = ProgressBar::new(all_json.len().to_owned() as u64);
 
     all_json.par_iter().for_each(|file| {
@@ -85,7 +85,7 @@ fn main() -> Result<(), Error> {
                 .unwrap();
         }
     });
-    prog.finish_with_message("created augmentations!\n");
+    prog.finish_with_message("[info]::kesa_aug: created augmentations!\n");
     Ok(())
 }
 
@@ -171,7 +171,7 @@ fn get_random_aug() -> Result<AugmentationType, Error> {
         10 => AugmentationType::HueRotate270,
         11 => AugmentationType::Grayscale,
         12 => AugmentationType::Rotate90,
-        _ => panic!("unknown augmentation type!"),
+        _ => panic!("[error]::kesa_aug: unknown augmentation type!"),
     };
     Ok(do_aug)
 }
