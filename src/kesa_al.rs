@@ -113,6 +113,7 @@ fn main() -> Result<(), Error> {
     let model_type: ComputeBackendType = get_backend(&args.weights)?;
     println!("Detected model format : {:#?}", &model_type);
     match model_type {
+        
         #[cfg(feature = "onnxruntime")]
         ComputeBackendType::OnnxModel => {
             let init_onnx = init_onnx_backend()?;

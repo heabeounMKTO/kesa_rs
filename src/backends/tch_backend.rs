@@ -92,9 +92,9 @@ impl TchModel {
                     .unwrap()
                     .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
-                let t1 = std::time::Instant::now();
+                // let t1 = std::time::Instant::now();
                 let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
-                println!("inference time: {:?}", t1.elapsed());
+                // println!("inference time: {:?}", t1.elapsed());
                 results
             }
             _ => {
