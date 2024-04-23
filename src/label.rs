@@ -1,7 +1,7 @@
 /* anything that's label related */
 use crate::image_utils::dynimg2string;
 use crate::output::OutputFormat;
-use anyhow::{Error, Result};
+use anyhow::{Error, Result, bail};
 use image::DynamicImage;
 use ndarray::{ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use serde::{Deserialize, Serialize};
@@ -29,16 +29,10 @@ impl YoloBbox {
     /// converts to normalized coords
     /// img_size is (w, h)
     /// checks if type is alreadyvalid
-    pub fn to_normalized(&mut self, img_size: &(usize, usize)) -> Self {
+    pub fn to_normalized(&mut self, img_size: &(u32, u32)) -> Self {
         match self.xyxy.coordinate_type {
             CoordinateType::Screen => {
-                let new_xyxy: Xyxy = Xyxy {
-                    coordinate_type: CoordinateType::Normalized,
-                    x1: self.xyxy.x1 / img_size.0 as f32,
-                    y1: self.xyxy.y1 / img_size.1 as f32,
-                    x2: self.xyxy.x2 / img_size.0 as f32,
-                    y2: self.xyxy.y2 / img_size.1 as f32,
-                };
+                let new_xyxy: Xyxy = self.xyxy.to_normalized(img_size).expect("YoloBbox: cannotconvert Screen -> Normalized"); 
                 YoloBbox {
                     class: self.class,
                     xyxy: new_xyxy,
@@ -55,7 +49,7 @@ impl YoloBbox {
 
     /// screen coords
     /// img_size is (w, h)
-    pub fn to_screen(&mut self, img_size: &(usize, usize)) -> Self {
+    pub fn to_screen(&mut self, img_size: &(u32, u32)) -> Self {
         match self.xyxy.coordinate_type {
             CoordinateType::Screen => YoloBbox {
                 class: self.class,
@@ -63,14 +57,7 @@ impl YoloBbox {
                 confidence: self.confidence,
             },
             CoordinateType::Normalized => {
-                let new_xyxy: Xyxy = Xyxy {
-                    coordinate_type: CoordinateType::Screen,
-                    x1: self.xyxy.x1 * img_size.0 as f32,
-                    y1: self.xyxy.y1 * img_size.1 as f32,
-                    x2: self.xyxy.x2 * img_size.0 as f32,
-                    y2: self.xyxy.y2 * img_size.1 as f32,
-                };
-
+                let new_xyxy: Xyxy = self.xyxy.to_screen(img_size).expect("YoloBbox: cannot convert Normalized -> Screen"); 
                 YoloBbox {
                     class: self.class,
                     xyxy: new_xyxy,
@@ -79,7 +66,25 @@ impl YoloBbox {
             }
         }
     }
+
+    pub fn to_shape(&mut self, all_classes: &Vec<String>) -> Result<Shape, Error> {
+        match self.xyxy.coordinate_type {
+            CoordinateType::Screen => {
+                Ok(Shape{
+                    label: all_classes[self.class as usize].to_owned(),
+                    points: vec![vec![self.xyxy.x1, self.xyxy.y1], vec![self.xyxy.x2, self.xyxy.y2]],
+                    group_id: Some(self.confidence.to_string()),
+                    shape_type: String::from("rectangle"),
+                    flags: HashMap::new(),
+                })
+            },
+            CoordinateType::Normalized => {
+                bail!("please convert coordinate type to screen first ! (using YoloBBox::to_screen)")
+            }
+        }
+    }
 }
+
 
 #[derive(Debug)]
 pub struct Xywh {
@@ -296,13 +301,13 @@ impl LabelmeAnnotation {
 
 /// parsed directrly from the json file eh
 ///
-/// pub struct Shape {
-///    pub label: String,
-///    pub points: Vec<Vec<f32>>,
-///    pub group_id: Option<String>,
-///    pub shape_type: String,
-///    pub flags: HashMap<String, String>,
-///}
+/// `Shape {
+///    label: String,
+///    points: Vec<Vec<f32>>,
+///    group_id: Option<String>,
+///    shape_type: String,
+///    flags: HashMap<String, String>,
+///  }`
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Shape {
