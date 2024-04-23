@@ -52,6 +52,7 @@ impl TchModel {
         );
         Ok(())
     }
+    
 
     /// fp32 warmup on gpu
     pub fn warmup_gpu(&self) -> Result<(), Error> {
@@ -95,6 +96,21 @@ impl TchModel {
         let pred_T = tch::Tensor::try_from(pred)?;
         println!("pred_t, {:?}", pred_T);
         Ok(())
+    }
+    
+
+    // debugging
+    pub fn _run_fp16(
+        &self,
+        image: &tch::Tensor,
+        conf_thresh: f32,
+        iou_thresh: f32,
+    ) -> Result<Vec<YoloBbox>, Error> {
+        let img = tch::vision::image::resize(&image, self.w , self.h).unwrap();
+        let img = img.unsqueeze(0).to_kind(tch::Kind::Float).to_device(self.device).g_div_scalar(255.0);
+        let pred = self.model.forward_ts(&[img]).unwrap().to_device(self.device);
+        let pred_t = pred.transpose(2,1);
+        self.nms_yolov9(&pred_t.get(0), conf_thresh, iou_thresh)
     }
 
     /// runs inference in 16bit presicion (fp16)
@@ -191,7 +207,6 @@ impl TchModel {
                         class_index = i;
                     }
                 }
-
                 // NOTE: this outputs from the image inference size i.e 640
                 // so to get back coordinates for original image
                 // you can normalize these coordinates [x,y]/640 then multiply
@@ -211,6 +226,7 @@ impl TchModel {
                     };
                     bboxes[class_index].push(bbox);
                 }
+                // println!("BBOX {:?}", &bboxes);
             }
         }
         for bboxes_for_class in bboxes.iter_mut() {
