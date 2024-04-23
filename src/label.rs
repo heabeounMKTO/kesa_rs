@@ -10,6 +10,86 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
+/// yolo outputs bbox 
+#[derive(Debug, Clone, Copy)]
+pub struct YoloBbox {
+    pub class: i64,
+    pub xyxy: Xyxy,
+    pub confidence: f32
+}
+
+impl YoloBbox {
+    pub fn new(class: i64, 
+               xyxy: Xyxy,
+                confidence: f32) -> YoloBbox {
+        YoloBbox {
+            class,
+            xyxy,
+            confidence
+        }
+    }
+    /// converts to normalized coords
+    /// checks if type is alreadyvalid 
+    pub fn to_normalized(&mut self, img_size: (usize, usize)) -> Self {
+        let _normalized = match self.xyxy.coordinate_type {
+            CoordinateType::Screen => {
+                let new_xyxy: Xyxy = Xyxy {
+                    coordinate_type: CoordinateType::Normalized,
+                    x1: self.xyxy.x1 / img_size.0 as f32,
+                    y1: self.xyxy.y1 / img_size.1 as f32,
+                    x2: self.xyxy.x2 / img_size.0 as f32,
+                    y2: self.xyxy.y2 / img_size.1 as f32
+                };
+                YoloBbox {
+                    class: self.class,
+                    xyxy: new_xyxy,
+                    confidence: self.confidence
+                }
+            } ,
+            CoordinateType::Normalized => {
+                YoloBbox {
+                    class: self.class,
+                    xyxy: self.xyxy,
+                    confidence: self.confidence
+                } 
+            }
+        };
+        _normalized
+    }
+
+    /// screen coords
+    pub fn to_screen(&mut self, img_size: (usize, usize)) -> Self {
+        let _normalized = match self.xyxy.coordinate_type {
+        CoordinateType::Screen => {
+                YoloBbox {
+                    class: self.class,
+                    xyxy: self.xyxy,
+                    confidence: self.confidence
+                }
+        },
+        CoordinateType::Normalized => {
+        let new_xyxy: Xyxy = Xyxy {     
+                coordinate_type: CoordinateType::Screen,
+                x1: self.xyxy.x1 * img_size.0 as f32,
+                y1: self.xyxy.y1 * img_size.1 as f32,
+                x2: self.xyxy.x2 * img_size.0 as f32,
+                y2: self.xyxy.y2 * img_size.1 as f32
+            };
+
+            YoloBbox {
+                    class: self.class,
+                    xyxy: new_xyxy,
+                    confidence: self.confidence
+            }
+        }
+    };
+        _normalized
+    }
+}
+
+
+
+
 #[derive(Debug)]
 pub struct Xywh {
     pub coordinates_type: CoordinateType,
@@ -22,7 +102,7 @@ pub struct Xywh {
 /// struct for storing generic xyxy's
 /// for conversion between normalized
 /// and screen coordinates.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Xyxy {
     pub coordinate_type: CoordinateType,
     pub x1: f32,
@@ -93,6 +173,9 @@ impl Xyxy {
     }
 }
 
+
+
+/// yolo txt export format 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct YoloAnnotation {
     pub class: i64,
@@ -131,6 +214,8 @@ impl YoloAnnotation {
             confidence: 0.5,
         }
     }
+
+
 }
 
 impl OutputFormat for YoloAnnotation {
@@ -265,7 +350,7 @@ pub enum ShapeType {
     Mask,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone , Copy)]
 pub enum CoordinateType {
     Screen,
     Normalized,

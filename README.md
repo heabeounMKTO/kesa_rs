@@ -10,18 +10,38 @@ kesa comes with a few binaries.
 
 
 # external dependencies
+currently `kesa_al` uses either torch(tch-rs) or onnxruntime(ort) to label images,
+you can compile with either or both. you just need to download and link the libraries.
 ## onnxruntime 
 - build/download library [onnxruntime](https://github.com/microsoft/onnxruntime)
-- add to path (in this example this is the cuda version):
+- add to your ~/.zshrc or ~/.bashrc:
   ```bash
   export LD_LIBRARY_PATH=/path/to/onnxruntime-linux-x64-cuda-1.17.1/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
   ```
 ## tch-rs 
 *wip*
+- download libtorch from [pytorch](https://pytorch.org/) site
+- add to your ~/.zshrc or ~/.bashrc:
+  ```bash
+  export LIBTORCH=/media/hbpopos/penisf/libtorch-cxx11-abi-shared-with-deps-2.2.0+cu121/libtorch
+  export LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
+  ```
+- alternative options for installing `tch-rs`  can be found [here](https://github.com/LaurentMazare/tch-rs?tab=readme-ov-file#libtorch-manual-install)
 
 # building 
 make sure you have the dependencies listed above <br>
 to build , run:
 ```bash
 cargo build --release
+```
+by default, kesa_al currently won't work without a backend specified, enable it by passing a feature flag.
+```bash
+// enable onnxruntime backend
+cargo build --bin kesa_al --release --features onnxruntime
+
+// enable torch backend
+cargo build --bin kesa_al --release --features torch
+
+// enable both
+cargo build --bin kesa_al --release --features torch --features onnxruntime
 ```

@@ -1,12 +1,14 @@
 use crate::label::Xyxy;
-use crate::label::YoloAnnotation;
+use crate::label::{YoloBbox, CoordinateType};
 use anyhow::bail;
 use anyhow::{Error, Result};
 use conv::TryInto;
+use half::f16;
 use sorted_list::Tuples;
 use std::io;
 use tch::kind;
 use tch::IValue;
+use tch::Kind;
 use tch::Tensor;
 use tch::{self, vision::image};
 
@@ -20,13 +22,29 @@ pub struct TchModel {
 impl TchModel {
     pub fn new(weights: &str, w: i64, h: i64, device: tch::Device) -> TchModel {
         let mut model = tch::CModule::load_on_device(weights, device).unwrap();
-        model.set_eval();
+        // model.set_eval();
         TchModel {
             model: model,
             device: device,
             w: w,
             h: h,
         }
+    }
+
+    /// forward pass with zeroes
+    pub fn warmupfp16(&self) -> Result<(), Error> {
+        // half cuda cos there aint any in tch
+        // nhom kherng yerng ai >:(
+        let HALF_CUDA: (Kind, tch::Device) = (Kind::Half, tch::Device::Cuda(0));
+        let mut img: Tensor = Tensor::zeros([3, 640, 640], HALF_CUDA);
+        img = img
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Half)
+            .to_device(self.device);
+        let t1 = std::time::Instant::now();
+        let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("warmup time: {:?}", t1.elapsed());
+        Ok(())
     }
 
     /// forward pass with zeroes
@@ -37,7 +55,9 @@ impl TchModel {
             .to_kind(tch::Kind::Float)
             .to_device(self.device)
             .g_div_scalar(255.0);
+        let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("warmup time: {:?}", t1.elapsed());
         Ok(())
     }
 
@@ -55,14 +75,14 @@ impl TchModel {
         Ok(())
     }
 
-    /// runs inference in half (fp16)
+    /// runs inference in 16bit presicion (fp16)
     pub fn run_fp16(
         &self,
         image: &tch::Tensor,
         conf_thresh: f32,
         iou_thresh: f32,
         yolo_version: &str,
-    ) -> Result<Vec<YoloAnnotation>, Error> {
+    ) -> Result<Vec<YoloBbox>, Error> {
         let img = image.to_kind(tch::Kind::Half).to_device(self.device);
         match yolo_version {
             "yolov9" => {
@@ -72,7 +92,10 @@ impl TchModel {
                     .unwrap()
                     .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
-                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh)
+                let t1 = std::time::Instant::now();
+                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
+                println!("inference time: {:?}", t1.elapsed());
+                results
             }
             _ => {
                 todo!()
@@ -80,14 +103,14 @@ impl TchModel {
         }
     }
 
-    /// runs inference in full (fp32) precision :)
+    /// runs inference in 32bit (fp32) precision :)
     pub fn run(
         &self,
         image: &tch::Tensor,
         conf_thresh: f32,
         iou_thresh: f32,
         yolo_version: &str,
-    ) -> Result<Vec<YoloAnnotation>, Error> {
+    ) -> Result<Vec<YoloBbox>, Error> {
         let img = image.to_kind(tch::Kind::Float).to_device(self.device);
         match yolo_version {
             "yolov9" => {
@@ -108,62 +131,66 @@ impl TchModel {
                     .to_device(self.device);
                 let _transposed_o = pred.transpose(2, 1);
                 println!("transpoed: {:?}", _transposed_o);
-                Ok(self.non_max_suppression(&_transposed_o.get(0), conf_thresh, iou_thresh))
+                self.non_max_suppression(&_transposed_o.get(0), conf_thresh, iou_thresh)
             }
         }
     }
 
-    fn iou(&self, b1: &YoloAnnotation, b2: &YoloAnnotation) -> f32 {
-        let b1_area = (b1.w - b1.xmin + 1.) * (b1.h - b1.ymin + 1.);
-        let b2_area = (b2.w - b2.xmin + 1.) * (b2.h - b2.ymin + 1.);
-        let i_xmin = b1.xmin.max(b2.xmin);
-        let i_w = b1.w.min(b2.w);
-        let i_ymin = b1.ymin.max(b2.ymin);
-        let i_h = b1.h.min(b2.h);
+    fn iou(&self, b1: &YoloBbox, b2: &YoloBbox) -> f32 {
+        let b1_area = (b1.xyxy.x2 - b1.xyxy.x1 + 1.) * (b1.xyxy.y2 - b1.xyxy.y1 + 1.);
+        let b2_area = (b2.xyxy.x2 - b2.xyxy.x1 + 1.) * (b2.xyxy.y2 - b2.xyxy.y1 + 1.);
+        let i_xmin = b1.xyxy.x1.max(b2.xyxy.x1);
+        let i_w = b1.xyxy.x2.min(b2.xyxy.x2);
+        let i_ymin = b1.xyxy.y1.max(b2.xyxy.y1);
+        let i_h = b1.xyxy.y2.min(b2.xyxy.y2);
         let i_area = (i_w - i_xmin + 1.).max(0.) * (i_h - i_ymin + 1.).max(0.);
-        (i_area / (b1_area + b2_area - i_area)) as f32
+        i_area / (b1_area + b2_area - i_area)
     }
 
-    /// temporary function for getting NMS for yolov9 models :)
+    /// NMS for yolov9 models :)
     fn nms_yolov9(
         &self,
         pred: &Tensor,
         conf_thresh: f32,
         iou_thresh: f32,
-    ) -> Result<Vec<YoloAnnotation>, Error> {
-        // outputs [1, 8400, 56]
+    ) -> Result<Vec<YoloBbox>, Error> {
+        // yolov9 transposed output [1, 8400, 56]
         let (npreds, preds_size) = pred.size2().unwrap();
         let nclasses = (preds_size - 4) as usize;
-        // println!("DEBUG: nclasses: {:?}", &nclasses);
-        // println!("DEBUG npreds: {:?}", &npreds);
-        let mut bboxes: Vec<Vec<YoloAnnotation>> = (0..nclasses).map(|_| vec![]).collect();
-        // println!("bboxes: {:?}", &bboxes);
+        let mut bboxes: Vec<Vec<YoloBbox>> = (0..nclasses).map(|_| vec![]).collect();
         for index in 0..npreds {
             let pred = Vec::<f32>::try_from(pred.get(index))?;
             let confidence = *pred[5..].iter().max_by(|x, y| x.total_cmp(y)).unwrap();
-            // println!("Pred[5], {:?}", &confidence);
             if confidence > conf_thresh {
-                // println!("confidence {:?}", &confidence);
                 let mut class_index = 0;
                 for i in 0..nclasses {
                     if pred[4 + i] > pred[4 + class_index] {
                         class_index = i;
                     }
                 }
-                // println!("pred {:?}", &pred);
+
+                // NOTE: this outputs from the image inference size i.e 640
+                // so to get back coordinates for original image
+                // you can normalize these coordinates [x,y]/640 then multiply
+                // it by its dimension i.e [x, y]*[imagewidth, imageheight]
                 if pred[4 + class_index] > 0. {
-                    let bbox = YoloAnnotation {
-                        xmin: (pred[0] - pred[2] / 2.),
-                        ymin: (pred[1] - pred[3] / 2.),
-                        w: (pred[0] + pred[2] / 2.),
-                        h: (pred[1] + pred[3] / 2.),
-                        confidence: confidence,
+
+                    let xyxy: Xyxy = Xyxy {
+                        coordinate_type: CoordinateType::Screen,
+                        x1: (pred[0] - pred[2] / 2.0),
+                        y1: (pred[1] - pred[3] / 2.0),
+                        x2: (pred[0] + pred[2] / 2.0),
+                        y2: (pred[0] + pred[3] / 2.0)
+                    };
+                    let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
+                        xyxy: xyxy,
+                        confidence: confidence
                     };
                     bboxes[class_index].push(bbox);
                 }
             }
-        } // println!("DEBUG bboxes , {:?}", &bboxes);
+        }
         for bboxes_for_class in bboxes.iter_mut() {
             bboxes_for_class.sort_by(|b1, b2| b2.confidence.partial_cmp(&b1.confidence).unwrap());
             let mut current_index = 0;
@@ -183,7 +210,6 @@ impl TchModel {
             }
             bboxes_for_class.truncate(current_index);
         }
-
         let mut result = vec![];
 
         for bboxes_for_class in bboxes.iter() {
@@ -200,10 +226,10 @@ impl TchModel {
         pred: &Tensor,
         conf_thresh: f32,
         iou_thresh: f32,
-    ) -> Vec<YoloAnnotation> {
+    ) -> Result<Vec<YoloBbox>, Error> {
         let (npreds, pred_size) = pred.size2().unwrap();
         let nclasses = (pred_size - 5) as usize;
-        let mut bboxes: Vec<Vec<YoloAnnotation>> = (0..nclasses).map(|_| vec![]).collect();
+        let mut bboxes: Vec<Vec<YoloBbox>> = (0..nclasses).map(|_| vec![]).collect();
         for index in 0..npreds {
             let pred = Vec::<f32>::try_from(pred.get(index)).expect("cannot convert");
             let confidence = pred[4];
@@ -218,13 +244,17 @@ impl TchModel {
                 }
                 println!("Class index {:?}", &class_index);
                 if pred[5 + class_index] > 0. {
-                    let bbox = YoloAnnotation {
-                        xmin: (pred[0] - pred[2] / 2.) as f32,
-                        ymin: (pred[1] - pred[3] / 2.) as f32,
-                        w: (pred[0] + pred[2] / 2.) as f32,
-                        h: (pred[1] + pred[3] / 2.) as f32,
-                        confidence: confidence as f32,
+                    let xyxy: Xyxy = Xyxy {
+                        coordinate_type: CoordinateType::Screen,
+                        x1: (pred[0] - pred[2] / 2.0),
+                        y1: (pred[1] - pred[3] / 2.0),
+                        x2: (pred[0] + pred[2] / 2.0),
+                        y2: (pred[0] + pred[3] / 2.0)
+                    };
+                    let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
+                        xyxy: xyxy,
+                        confidence: confidence
                     };
                     bboxes[class_index].push(bbox);
                 }
@@ -260,6 +290,6 @@ impl TchModel {
             }
         }
         println!("Result: {:?}", &result);
-        result
+        Ok(result)
     }
 }

@@ -59,3 +59,7 @@ path = "src/kesa_aug.rs"
 opt-level = "z"
 strip = true  # WE STRIPPING THE SYMBOLS WITH THIS ONE  🗣️🗣️🔥🔥🔥
 lto = true
+
+
+[target.x86_64-apple-darwin]
+rustflags = [ "-Clink-args=-Wl,-rpath,@loader_path" ]
