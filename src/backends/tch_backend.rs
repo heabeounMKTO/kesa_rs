@@ -1,5 +1,5 @@
 use crate::label::Xyxy;
-use crate::label::{YoloBbox, CoordinateType};
+use crate::label::{CoordinateType, YoloBbox};
 use anyhow::bail;
 use anyhow::{Error, Result};
 use conv::TryInto;
@@ -174,18 +174,17 @@ impl TchModel {
                 // you can normalize these coordinates [x,y]/640 then multiply
                 // it by its dimension i.e [x, y]*[imagewidth, imageheight]
                 if pred[4 + class_index] > 0. {
-
                     let xyxy: Xyxy = Xyxy {
                         coordinate_type: CoordinateType::Screen,
                         x1: (pred[0] - pred[2] / 2.0),
                         y1: (pred[1] - pred[3] / 2.0),
                         x2: (pred[0] + pred[2] / 2.0),
-                        y2: (pred[0] + pred[3] / 2.0)
+                        y2: (pred[0] + pred[3] / 2.0),
                     };
                     let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
                         xyxy: xyxy,
-                        confidence: confidence
+                        confidence: confidence,
                     };
                     bboxes[class_index].push(bbox);
                 }
@@ -249,12 +248,12 @@ impl TchModel {
                         x1: (pred[0] - pred[2] / 2.0),
                         y1: (pred[1] - pred[3] / 2.0),
                         x2: (pred[0] + pred[2] / 2.0),
-                        y2: (pred[0] + pred[3] / 2.0)
+                        y2: (pred[0] + pred[3] / 2.0),
                     };
                     let bbox: YoloBbox = YoloBbox {
                         class: class_index as i64,
                         xyxy: xyxy,
-                        confidence: confidence
+                        confidence: confidence,
                     };
                     bboxes[class_index].push(bbox);
                 }

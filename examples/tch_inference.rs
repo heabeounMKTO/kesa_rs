@@ -29,12 +29,14 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
     let _ac: Vec<String> = all_classes.iter().map(|x| String::from(*x)).collect();
     let preproc_img = image_utils::preprocess_imagef16(&_img2, 640)?;
     let mut _pimg2 = tch::Tensor::try_from(preproc_img)?;
-    println!("pimg2 {:?}", _pimg2);
+    println!("pimg2 {:?}", _img2.dimensions());
     let mut test_inf = loaded_model.run_fp16(&_pimg2, 0.7, 0.6, "yolov9")?;
     println!(
-        "testinf[1] to yolo: {:?}", test_inf[0]
-            .to_normalized((640,640))
-            .to_screen((690, 1035)));
+        "testinf[1] to yolo: {:?}",
+        test_inf[0]
+            .to_normalized(&(640, 640))
+            .to_screen(&(690, 1035))
+    );
     Ok(loaded_model)
 }
 

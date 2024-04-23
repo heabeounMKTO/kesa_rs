@@ -7,7 +7,6 @@ use super::candle_backend::CandleModel;
 #[cfg(feature = "onnxruntime")]
 use super::onnx_backend::OnnxModel;
 
-
 #[cfg(feature = "torch")]
 use super::tch_backend::TchModel;
 
