@@ -51,19 +51,19 @@ fn main() -> Result<(), Error> {
     // TODO: put split portions
     let export_options = ExportFolderOptions::new(export.unwrap().as_str(), 0.7)?;
     println!("Export Options: {:#?}", &export_options);
-    let mut spinner0 = Spinner::new(spinners::Hearts, "Creating export paths", Color::White);
+    let mut spinner0 = Spinner::new(spinners::Hearts, "[info]::kesa_l2y: creating export paths", Color::White);
     export_options.create_folders()?;
-    spinner0.success("Created export paths");
+    spinner0.success("[info]::kesa_l2y: created export paths");
 
     let mut spinner = Spinner::new(
         spinners::Hearts,
-        format!("Searching for .json files in {:?}", &args.folder),
+        format!("[info]::kesa_l2y: searching for .json files in {:?}", &args.folder),
         Color::White,
     );
     let all_json = get_all_jsons(&args.folder)?;
     let all_classes = get_all_classes(&all_json)?;
 
-    spinner.success(format!("found {:?} json files", &all_json.len()).as_str());
+    spinner.success(format!("[info]::kesa_l2y: found {:?} json files", &all_json.len()).as_str());
 
     let prog = ProgressBar::new(all_json.len().to_owned() as u64);
     let class_hash = get_all_classes_hash(&all_classes)?;
@@ -72,7 +72,7 @@ fn main() -> Result<(), Error> {
         prog.inc(1);
         convert_labelme2yolo(file, &class_hash)
     });
-    prog.finish_with_message("Conversion done !\n");
+    prog.finish_with_message("[info]::kesa_l2y: conversion done !\n");
 
     // split array into 3
     let train_split = all_json.len().to_owned() as f32 * export_options.train_ratio;
@@ -96,7 +96,7 @@ fn convert_labelme2yolo(json: &PathBuf, class_hash: &HashMap<String, i64>) -> ()
     // convert to yolo txt format
     let all_yolo = all_shapes
         .to_yolo(&class_hash)
-        .expect("cannot convert yolo");
+        .expect("[error]::kesa_l2y: cannot convert yolo");
     let _write = write_yolo_to_txt(all_yolo, &json);
 }
 
@@ -106,7 +106,7 @@ fn move_files(
     export_options: &ExportFolderOptions,
     batch: &str,
 ) -> Result<(), Error> {
-    println!("moving files to `{}` batch", &batch);
+    println!("[info]::kesa_l2y: moving files to `{}` batch", &batch);
     let prog = ProgressBar::new(input_array.len().to_owned() as u64);
     for orig_json_file in input_array.iter() {
         prog.inc(1);
@@ -144,11 +144,11 @@ fn move_files(
                 fs::rename(orig_txt_file, dest_label)?;
             }
             _ => {
-                bail!("unrecognized batch name {:?}", batch)
+                bail!("[error]::kesa_l2y: unrecognized batch name {:?}", batch)
             }
         }
     }
-    prog.finish_with_message("files moved !\n");
-    println!("files moving done!");
+    prog.finish_with_message("[info]::kesa_l2y: files moved !\n");
+    println!("[info]::kesa_l2y: files moving done!");
     Ok(())
 }

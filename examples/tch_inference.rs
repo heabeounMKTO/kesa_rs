@@ -34,7 +34,7 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
     let uhhh = test_inf[0].to_normalized(&(640, 640)).to_screen(&(690, 1035)).to_shape(&_ac, &(690, 1035))?;
     let _2vec: Vec<Shape> = vec![uhhh];
     let _lm: LabelmeAnnotation = LabelmeAnnotation::from_shape_vec(imgpath, &_img2, &_2vec)?;
-    println!("labelme anno w:{:?} h:{:?}", _lm, _lm.imageHeight);
+    println!("labelme anno w:{:?} h:{:?}", _lm.imageWidth, _lm.imageHeight);
     Ok(loaded_model)
 }
 

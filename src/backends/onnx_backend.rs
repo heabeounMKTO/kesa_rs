@@ -61,7 +61,7 @@ impl InferenceModel for OnnxModel {
                 }
                 // returns a vec with a single numer on error :|
                 Err(e) => {
-                    println!("cannot find any detections! {}", e);
+                    println!("[error]::onnx_backend: cannot find any detections! {}", e);
                     let mut rnd = rand::thread_rng();
                     let random_num = vec![rnd.gen::<u8>() as usize];
                     Embeddings::new(Array::zeros(IxDyn(&random_num)))
@@ -115,7 +115,7 @@ impl<'a> OnnxInference<'a> {
                 }
                 // returns a vec with a single numer on error :|
                 Err(e) => {
-                    println!("cannot find any detections! {}", e);
+                    println!("[error]::onnx_backend: cannot find any detections! {}", e);
                     let mut rnd = rand::thread_rng();
                     let random_num = vec![rnd.gen::<u8>() as usize];
                     Embeddings::new(Array::zeros(IxDyn(&random_num)))
@@ -163,7 +163,7 @@ pub fn load_onnx_model(
         .commit_from_file(&model_path)
         .unwrap();
     let model_yaml_config_path = get_config_from_name(&config_path, &model_path)
-        .expect("Cannot Find model Configuration file");
+        .expect("[error]::onnx_backend: cannot find model configuration file");
 
     let model_details =
         serde_yaml::from_reader(std::fs::File::open(&model_yaml_config_path)?).unwrap();
@@ -172,13 +172,13 @@ pub fn load_onnx_model(
     // nhom sok chet ort mean phob lok
     let mut spinna = Spinner::new(
         Spinners::Dots12,
-        format!("Loading Model {:?}", &model_path).into(),
+        format!("[info]::onnx_backend: loading model {:?}", &model_path).into(),
     );
     let loaded_model: OnnxModel = OnnxModel::new(model_details, model, false).unwrap();
     let mut _dummy_input: ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>> =
         Array::ones((1, 3, 640, 640));
     let original_img = image::open(Path::new(image_path)).unwrap();
-    println!("\nRunning Warmup");
+    println!("\n[info]::onnx_backend: running Warmup");
     // runs a forward pass on a random image from the folder
     let _ = &loaded_model.run(original_img);
     spinna.stop_with_symbol("✅");

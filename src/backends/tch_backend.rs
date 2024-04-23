@@ -12,11 +12,13 @@ use tch::Kind;
 use tch::Tensor;
 use tch::{self, vision::image};
 
+
+#[derive(Debug)]
 pub struct TchModel {
-    model: tch::CModule,
-    device: tch::Device,
-    w: i64,
-    h: i64,
+    pub model: tch::CModule,
+    pub device: tch::Device,
+    pub w: i64,
+    pub h: i64,
 }
 
 impl TchModel {
