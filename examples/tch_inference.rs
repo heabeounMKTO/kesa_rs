@@ -32,7 +32,9 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
     println!("pimg2 {:?}", _pimg2);
     let mut test_inf = loaded_model.run_fp16(&_pimg2, 0.7, 0.6, "yolov9")?;
     println!(
-        "testinf[1] to yolo: {:?}", test_inf[0].to_normalized((640,640)) );
+        "testinf[1] to yolo: {:?}", test_inf[0]
+            .to_normalized((640,640))
+            .to_screen((690, 1035)));
     Ok(loaded_model)
 }
 

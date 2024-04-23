@@ -29,6 +29,7 @@ impl YoloBbox {
         }
     }
     /// converts to normalized coords
+    /// img_size is (w, h)
     /// checks if type is alreadyvalid 
     pub fn to_normalized(&mut self, img_size: (usize, usize)) -> Self {
         let _normalized = match self.xyxy.coordinate_type {
@@ -58,6 +59,7 @@ impl YoloBbox {
     }
 
     /// screen coords
+    /// img_size is (w, h)
     pub fn to_screen(&mut self, img_size: (usize, usize)) -> Self {
         let _normalized = match self.xyxy.coordinate_type {
         CoordinateType::Screen => {

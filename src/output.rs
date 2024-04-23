@@ -3,7 +3,6 @@ use image::DynamicImage;
 use crate::label::{LabelmeAnnotation, Shape, YoloAnnotation};
 use anyhow::{Error, Result};
 use std::collections::HashMap;
-use anyhow::{Result, Error};
 
 
 
