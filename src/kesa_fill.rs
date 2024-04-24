@@ -30,4 +30,5 @@ struct CliArguments {
 fn main() -> Result<(), Error> {
     print_splash();
     let args = CliArguments::parse();
+    Ok(())
 }
