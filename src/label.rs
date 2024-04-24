@@ -266,6 +266,25 @@ pub struct LabelmeAnnotation {
 }
 
 impl LabelmeAnnotation {
+
+    pub fn new(flags: Option<HashMap<String, String>>, 
+                shapes: Vec<Shape>,
+                image_path: String,
+                image_data: String,
+                image_width: i64,
+                image_height: i64) -> LabelmeAnnotation {
+        LabelmeAnnotation {
+            version: String::from("5.1.1"),
+            flags: flags,
+            shapes: shapes,
+            imagePath: image_path,
+            imageWidth: image_width,
+            imageHeight: image_height,
+            imageData: image_data
+        }
+    }
+
+
     pub fn get_xyxy(&self) -> Result<Vec<Xyxy>, Error> {
         let mut all_xyxys: Vec<Xyxy> = vec![];
         for shape in self.shapes.iter() {
@@ -279,6 +298,8 @@ impl LabelmeAnnotation {
         }
         Ok(all_xyxys)
     }
+
+
     // from screen shapes
     pub fn from_shape_vec(
         filename: &str,
