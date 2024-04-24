@@ -12,7 +12,6 @@ use tch::Kind;
 use tch::Tensor;
 use tch::{self, vision::image};
 
-
 #[derive(Debug)]
 pub struct TchModel {
     pub model: tch::CModule,
@@ -34,7 +33,9 @@ impl TchModel {
     }
 
     /// forward pass with zeroes
-    pub fn warmupfp16(&self) -> Result<(), Error> {
+    pub fn warmup_gpu_fp16(&self) -> Result<(), Error> {
+        println!("[info]::torch_backend: running gpu fp16 warmup");
+
         // half cuda cos there aint any in tch
         // nhom kherng yerng ai >:(
         let HALF_CUDA: (Kind, tch::Device) = (Kind::Half, tch::Device::Cuda(0));
@@ -45,13 +46,33 @@ impl TchModel {
             .to_device(self.device);
         let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("warmup time: {:?}", t1.elapsed());
+        println!(
+            "[info]::torch_backend: warmup_gpu_fp16 time: {:?}",
+            t1.elapsed()
+        );
+        Ok(())
+    }
+    
+
+    /// fp32 warmup on gpu
+    pub fn warmup_gpu(&self) -> Result<(), Error> {
+        println!("[info]::torch_backend: running gpu warmup");
+        let FLOAT_CUDA: (Kind, tch::Device) = (Kind::Float, tch::Device::Cuda(0));
+        let mut img: Tensor = Tensor::zeros([3, 640, 640], FLOAT_CUDA);
+        img = img
+            .unsqueeze(0)
+            .to_kind(tch::Kind::Float)
+            .to_device(self.device);
+        let t1 = std::time::Instant::now();
+        let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
+        println!("[info]::torch_backend: warmup_gpu time: {:?}", t1.elapsed());
         Ok(())
     }
 
-    /// forward pass with zeroes
+    /// forward pass with zeroes , for CPU inference
     pub fn warmup(&self) -> Result<(), Error> {
-        let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
+        println!("[info]::torch_backend: running cpu warmup");
+        let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::FLOAT_CPU);
         img = img
             .unsqueeze(0)
             .to_kind(tch::Kind::Float)
@@ -59,11 +80,11 @@ impl TchModel {
             .g_div_scalar(255.0);
         let t1 = std::time::Instant::now();
         let pred: tch::IValue = self.model.forward_is(&[tch::IValue::Tensor(img)])?;
-        println!("warmup time: {:?}", t1.elapsed());
+        println!("[info]::torch_backend: warmup time: {:?}", t1.elapsed());
         Ok(())
     }
 
-    /// for testing yolov5 models
+    /// [testing only] for testing yolov5 models
     pub fn warmupv5(&self) -> Result<(), Error> {
         let mut img: Tensor = Tensor::zeros(&[3, 640, 640], kind::INT64_CUDA);
         img = img
@@ -75,6 +96,21 @@ impl TchModel {
         let pred_T = tch::Tensor::try_from(pred)?;
         println!("pred_t, {:?}", pred_T);
         Ok(())
+    }
+    
+
+    // debugging
+    pub fn _run_fp16(
+        &self,
+        image: &tch::Tensor,
+        conf_thresh: f32,
+        iou_thresh: f32,
+    ) -> Result<Vec<YoloBbox>, Error> {
+        let img = tch::vision::image::resize(&image, self.w , self.h).unwrap();
+        let img = img.unsqueeze(0).to_kind(tch::Kind::Float).to_device(self.device).g_div_scalar(255.0);
+        let pred = self.model.forward_ts(&[img]).unwrap().to_device(self.device);
+        let pred_t = pred.transpose(2,1);
+        self.nms_yolov9(&pred_t.get(0), conf_thresh, iou_thresh)
     }
 
     /// runs inference in 16bit presicion (fp16)
@@ -93,11 +129,12 @@ impl TchModel {
                     .forward_ts(&[img])
                     .unwrap()
                     .to_device(self.device);
+                // turns [1,56, 8400] to [1, 8400, 56]
                 let _transposed_o = pred.transpose(2, 1);
                 // let t1 = std::time::Instant::now();
-                let results = self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh);
+                self.nms_yolov9(&_transposed_o.get(0), conf_thresh, iou_thresh)
                 // println!("inference time: {:?}", t1.elapsed());
-                results
+
             }
             _ => {
                 todo!()
@@ -170,7 +207,6 @@ impl TchModel {
                         class_index = i;
                     }
                 }
-
                 // NOTE: this outputs from the image inference size i.e 640
                 // so to get back coordinates for original image
                 // you can normalize these coordinates [x,y]/640 then multiply
@@ -190,6 +226,7 @@ impl TchModel {
                     };
                     bboxes[class_index].push(bbox);
                 }
+                // println!("BBOX {:?}", &bboxes);
             }
         }
         for bboxes_for_class in bboxes.iter_mut() {
@@ -218,7 +255,7 @@ impl TchModel {
                 result.push(*bbox);
             }
         }
-        println!("Result: {:?}", &result);
+        // println!("Result: {:?}", &result);
         Ok(result)
     }
 

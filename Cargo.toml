@@ -48,6 +48,10 @@ name = "kesa_l2y"
 path = "src/kesa_l2y.rs"
 
 [[bin]]
+name = "kesa_fill"
+path = "src/kesa_fill.rs"
+
+[[bin]]
 name = "kesa_split"
 path = "src/kesa_split.rs"
 

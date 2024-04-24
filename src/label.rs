@@ -35,7 +35,7 @@ impl YoloBbox {
                 let new_xyxy: Xyxy = self
                     .xyxy
                     .to_normalized(img_size)
-                    .expect("YoloBbox: cannotconvert Screen -> Normalized");
+                    .expect("[error]::YoloBbox: cannotconvert Screen -> Normalized");
                 YoloBbox {
                     class: self.class,
                     xyxy: new_xyxy,
@@ -266,6 +266,25 @@ pub struct LabelmeAnnotation {
 }
 
 impl LabelmeAnnotation {
+
+    pub fn new(flags: Option<HashMap<String, String>>, 
+                shapes: Vec<Shape>,
+                image_path: String,
+                image_data: String,
+                image_width: i64,
+                image_height: i64) -> LabelmeAnnotation {
+        LabelmeAnnotation {
+            version: String::from("5.1.1"),
+            flags: flags,
+            shapes: shapes,
+            imagePath: image_path,
+            imageWidth: image_width,
+            imageHeight: image_height,
+            imageData: image_data
+        }
+    }
+
+
     pub fn get_xyxy(&self) -> Result<Vec<Xyxy>, Error> {
         let mut all_xyxys: Vec<Xyxy> = vec![];
         for shape in self.shapes.iter() {
@@ -294,6 +313,28 @@ impl LabelmeAnnotation {
             imageData: base64img,
             imagePath: _file.file_name().unwrap().to_string_lossy().to_string()
         }) 
+    }
+
+
+    // from screen shapes
+    pub fn from_shape_vec(
+        filename: &str,
+        image_file: &DynamicImage,
+        shapes: &Vec<Shape>,
+    ) -> Result<LabelmeAnnotation, Error> {
+        let version: String = String::from("5.1.1");
+        let _file = PathBuf::from(&filename);
+        let flags: HashMap<String, String> = HashMap::new();
+        let base64img: String = dynimg2string_png(image_file)?;
+        Ok(LabelmeAnnotation {
+            version,
+            flags: Some(flags),
+            shapes: shapes.to_owned(),
+            imageWidth: image_file.dimensions().0.to_owned() as i64,
+            imageHeight: image_file.dimensions().1.to_owned() as i64,
+            imageData: base64img,
+            imagePath: _file.file_name().unwrap().to_string_lossy().to_string(),
+        })
     }
 
     pub fn update_shapes(&mut self) {

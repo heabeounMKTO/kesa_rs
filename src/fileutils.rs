@@ -108,6 +108,14 @@ pub fn get_all_txts(input: &str) -> Result<Vec<PathBuf>, Error> {
     Ok(all_jsons)
 }
 
+
+pub fn get_json_from_image(input: &PathBuf) -> Result<PathBuf, Error> {
+    let mut _json_file = input.to_owned();
+    _json_file.set_extension("json");
+    Ok(_json_file)
+}
+
+
 pub fn get_all_jsons(input: &str) -> Result<Vec<PathBuf>, Error> {
     let all_jsons: Vec<PathBuf> = fs::read_dir(&input)
         .unwrap()
