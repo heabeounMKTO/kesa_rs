@@ -131,6 +131,7 @@ fn main() -> Result<(), Error> {
     );
 
     match model_type {
+
         #[cfg(feature = "onnxruntime")]
         ComputeBackendType::OnnxModel => {
             let init_onnx = init_onnx_backend()?;

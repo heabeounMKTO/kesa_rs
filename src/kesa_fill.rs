@@ -48,6 +48,8 @@ fn main() -> Result<(), Error> {
     let mut all_images = get_all_images(&args.folder);
 
 
+
+
     spinner0.success(format!("[info]::kesa_fill: found {:?} images", &all_images.len()).as_str());    
     
     let prog = ProgressBar::new(all_images.len().to_owned() as u64);

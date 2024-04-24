@@ -298,28 +298,24 @@ impl LabelmeAnnotation {
         }
         Ok(all_xyxys)
     }
-
-
-    // from screen shapes
-    pub fn from_shape_vec(
-        filename: &str,
-        image_file: &DynamicImage,
-        shapes: &Vec<Shape>,
-    ) -> Result<LabelmeAnnotation, Error> {
-        let version: String = String::from("5.1.1");
+    // from screen shapes 
+    pub fn from_shape_vec(filename: &str, image_file: &DynamicImage, shapes: &Vec<Shape>) -> Result<LabelmeAnnotation, Error> {
+       let version: String = String::from("5.1.1");
         let _file = PathBuf::from(&filename);
         let flags: HashMap<String, String> = HashMap::new();
         let base64img: String = dynimg2string_png(image_file)?;
-        Ok(LabelmeAnnotation {
+        Ok(LabelmeAnnotation { 
             version,
             flags: Some(flags),
             shapes: shapes.to_owned(),
             imageWidth: image_file.dimensions().0.to_owned() as i64,
             imageHeight: image_file.dimensions().1.to_owned() as i64,
             imageData: base64img,
-            imagePath: _file.file_name().unwrap().to_string_lossy().to_string(),
-        })
+            imagePath: _file.file_name().unwrap().to_string_lossy().to_string()
+        }) 
     }
+
+
 
     pub fn update_shapes(&mut self) {
         todo!()
