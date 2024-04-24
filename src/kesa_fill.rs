@@ -50,7 +50,8 @@ fn main() -> Result<(), Error> {
 
 
 
-    spinner0.success(format!("[info]::kesa_fill: found {:?} images", &all_images.len()).as_str()); 
+    spinner0.success(format!("[info]::kesa_fill: found {:?} images", &all_images.len()).as_str());    
+    
     let prog = ProgressBar::new(all_images.len().to_owned() as u64);
     all_images.par_iter_mut().for_each(|img| {
         prog.inc(1);
@@ -71,7 +72,7 @@ fn main() -> Result<(), Error> {
         }
     });
 
-    prog.finish_with_message("[info]::kesa_fill: filled empty images!\n");
+    prog.finish();
     Ok(())
 
 }
