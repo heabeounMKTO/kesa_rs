@@ -398,7 +398,7 @@ pub enum CoordinateType {
 // not sure where to put these, just leaving it here for now :|
 #[derive(Debug, Clone)]
 pub struct Embeddings {
-    data: ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>>,
+    pub data: ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>>,
 }
 impl Embeddings {
     pub fn new(data: ArrayBase<OwnedRepr<f32>, Dim<IxDynImpl>>) -> Self {
