@@ -1,3 +1,4 @@
+#[cfg(feature="torch")]
 extern crate kesa;
 use anyhow::{bail, Error, Result};
 

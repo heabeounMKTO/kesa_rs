@@ -17,6 +17,16 @@ pub enum ComputeBackendType {
     TchModel,
 }
 
+
+#[derive(Debug, Clone)]
+pub enum ModelVersion {
+    V5,
+    V7,
+    V8,
+    V9
+}
+
+
 pub trait InferenceModel: Sized {
     fn run(&self, image: image::DynamicImage) -> Result<Embeddings, Error>;
     fn warmup(&self);

@@ -14,7 +14,7 @@ use crate::{
     output::OutputFormat,
 };
 use anyhow::{Error, Result};
-use backends::compute_backends::{get_backend, ComputeBackendType};
+use backends::compute_backends::{get_backend, ComputeBackendType, ModelVersion};
 #[cfg(feature = "onnxruntime")]
 use backends::onnx_backend::{init_onnx_backend, load_onnx_model};
 
@@ -62,7 +62,7 @@ struct CliArguments {
     /// input cpu or 0 1 2 etc for gpus
     device: Option<u32>,
 
-    #[arg(long, num_args(2))]
+    #[arg(long, num_args(2), required=true)]
     /// inference image size of the
     /// model provided
     imgsize: Vec<u32>,
@@ -72,6 +72,11 @@ struct CliArguments {
     /// outputs yolo txt files
     /// instead of LabelMe jsons
     txt: bool,
+    
+    #[arg(long, required=true)]
+    /// yolo version
+    /// example: "v9"
+    version: String, 
 
     #[arg(long)]
     /// amount of threads to use
@@ -81,7 +86,7 @@ struct CliArguments {
     /// cause allocation errors on gpu, if you are using gpu
     workers: Option<i64>,
 
-    #[arg(long)]
+    #[arg(long, required=true)]
     /// weights to be used
     weights: String,
 }
@@ -108,6 +113,19 @@ fn main() -> Result<(), Error> {
         Some(ref fuck) => tch::Device::Cuda(args.device.unwrap() as usize),
         None => tch::Device::Cpu,
     };
+
+
+    let model_version = match args.version.as_str() {
+        "v9" => ModelVersion::V9,
+        "v7" => ModelVersion::V7,
+        "v8" => ModelVersion::V8,
+        "v5" => ModelVersion::V5,
+        _ => panic!("[error]::kesa_al: unsuppourted yolo version {:?}\n[info]::kesa_al: suppourted versions:\n- v9\n- v8\n- v7\n- v5", args.version)
+    }; 
+
+
+
+
 
     let front_sort_dir = format!("{}/front", &args.folder);
     let back_sort_dir = format!("{}/back", &args.folder);
