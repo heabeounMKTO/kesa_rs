@@ -26,15 +26,15 @@ fn load_tch(input: &str, device: Option<tch::Device>) -> Result<TchModel, Error>
         "KC", "KD", "KH", "KS", "QC", "QD", "QH", "QS",
     ];
     let _ac: Vec<String> = all_classes.iter().map(|x| String::from(*x)).collect();
-    let preproc_img = image_utils::preprocess_imagef16(&_img2, 640)?;
+    let preproc_img = image_utils::preprocess_imagef32(&_img2, 640)?;
     let mut _pimg2 = tch::Tensor::try_from(preproc_img)?;
 
     let mut _img3 = tch::vision::image::load_and_resize(imgpath, 640, 640)?;
     // _img3 = _img3.unsqueeze(0).to_kind(tch::Kind::Float).to_device(loaded_model.device).g_div_scalar(255.0); 
 
     println!("pimg2 {:?}", _img2.dimensions());
-    let mut test_inf = loaded_model._run_fp16(&_img3, 0.7, 0.6)?;
-    println!("test_inf: {:?}", &test_inf);
+    let mut test_inf = loaded_model.run(&_pimg2, 0.7, 0.6, "yolov9")?;
+    println!("test_inf: {:?}", &test_inf[0]);
     let uhhh = test_inf[0]
         .to_normalized(&(640, 640))
         .to_screen(&(690, 1035))

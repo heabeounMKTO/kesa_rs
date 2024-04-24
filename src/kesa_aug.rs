@@ -30,10 +30,6 @@ struct CliArguments {
     workers: Option<i64>,
 
     #[arg(long)]
-    /// export folder
-    export: Option<String>,
-
-    #[arg(long)]
     /// export format , labelme or yolo?!
     /// by default is labelme
     format: Option<String>,
@@ -41,7 +37,7 @@ struct CliArguments {
     #[arg(long)]
     /// image variations to create
     /// by default is 5 times
-    variations: i32,
+    variations: Option<i32>,
 }
 
 fn main() -> Result<(), Error> {
@@ -51,6 +47,11 @@ fn main() -> Result<(), Error> {
     let workers = match &args.workers {
         Some(ref _i64) => args.workers,
         None => Some(4),
+    };
+    
+    let aug_variations = match &args.variations {
+        Some(ref _i32) => args.variations,
+        None => Some(5)
     };
 
     let export_format = match &args.format {
@@ -78,7 +79,7 @@ fn main() -> Result<(), Error> {
 
     all_json.par_iter().for_each(|file| {
         prog.inc(1);
-        for _ in 0..(args.variations) {
+        for _ in 0..(aug_variations.unwrap()) {
             // idk how can this cause a panic ok\
             //
             // (comments before disaster)
