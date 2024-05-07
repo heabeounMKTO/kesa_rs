@@ -6,12 +6,12 @@ mod output;
 mod splash;
 
 use anyhow::{bail, Error, Result};
-use clap::Parser;
+use clap::{Parser, ArgAction};
 use fileutils::{get_all_classes, open_image, ExportFolderOptions, get_json_from_image,get_all_images, write_labelme_to_json};
 use image::{DynamicImage, GenericImageView};
 use indicatif::ProgressBar;
 use kesa::image_utils::dynimg2string;
-use label::{read_labels_from_file,Shape, LabelmeAnnotation};
+use label::{read_labels_from_file,Shape, LabelmeAnnotation, YoloAnnotation};
 use rand::distributions::{Distribution, Uniform};
 use rayon::prelude::*;
 use spinoff::{spinners, Color, Spinner};
@@ -20,7 +20,6 @@ use std::collections::HashMap;
 use std::fs::Metadata;
 use std::{fs, path::PathBuf};
 
-use crate::fileutils::{get_all_classes_hash, get_all_jsons, write_data_yaml, write_yolo_to_txt};
 
 #[derive(Parser, Debug)]
 struct CliArguments {
@@ -28,7 +27,10 @@ struct CliArguments {
     folder: String,
 
     #[arg(long)]
-    workers: Option<i64>
+    workers: Option<i64>,
+
+    #[arg(long, action=ArgAction::SetTrue)]
+    txt: bool
 }
 
 fn main() -> Result<(), Error> {
@@ -38,7 +40,7 @@ fn main() -> Result<(), Error> {
         Some(_) => args.workers,
         None => Some(4)
     };
-
+    let write_txt = args.txt;
     rayon::ThreadPoolBuilder::new()
         .num_threads(workers.unwrap().try_into().unwrap())
         .build_global()
@@ -56,13 +58,22 @@ fn main() -> Result<(), Error> {
     all_images.par_iter_mut().for_each(|img| {
         prog.inc(1);
         let _json_path = get_json_from_image(&img).expect("[info]::kesa_fill: cannot convert to json path");
+        let mut _txt = img.to_owned();
+        _txt.set_extension("txt");
         match std::fs::metadata(&_json_path) {
             Ok(_) => {},
             Err(_) => {
                 let _f = create_empty_annotation_from_image(&img);
                 match _f {
                     Ok(label) => {
-                       write_labelme_to_json(&label,&img); 
+                        match write_txt {
+                            false => {
+                                   write_labelme_to_json(&label,&img); 
+                            },
+                            true => {
+                               let _empty_txt_output = fs::File::create(_txt).unwrap();
+                            }
+                        }
                     },
                     Err(e) => {
                         eprintln!("[error]::kesa_fill: {:?}\ncannot create labelme json for file {:?}",e, &img);
@@ -93,4 +104,8 @@ fn create_empty_annotation_from_image(input_img: &PathBuf) -> Result<LabelmeAnno
             read_img.dimensions().1 as i64
         )
     )
+}
+
+fn create_empty_yolo_txt(input_img: &PathBuf) -> Result<(), Error> {
+   todo!() 
 }

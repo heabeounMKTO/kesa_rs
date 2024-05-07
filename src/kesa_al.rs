@@ -13,6 +13,7 @@ use crate::{
     model::DatasetInfo,
     output::OutputFormat,
 };
+
 use anyhow::{Error, Result};
 use backends::compute_backends::{get_backend, ComputeBackendType, ModelVersion};
 #[cfg(feature = "onnxruntime")]
@@ -32,7 +33,6 @@ use lazy_static::lazy_static;
 use ndarray::{s, ArrayBase, Axis, Dim, IxDynImpl, OwnedRepr};
 use plotting::draw_dummy_graph;
 use rayon::prelude::*;
-use spinners::{Spinner, Spinners};
 use splash::print_splash;
 use std::fs::{self, File};
 use std::io::BufReader;

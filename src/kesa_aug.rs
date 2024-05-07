@@ -86,8 +86,14 @@ fn main() -> Result<(), Error> {
             let do_aug = get_random_aug().unwrap();
 
             // FUCK THEM <<RESULT>> HANDLING KIDS
-            create_augmentation(do_aug, &file, &classes_hash, &export_format, &args.folder)
-                .unwrap();
+            let _c = create_augmentation(do_aug, &file, &classes_hash, &export_format, &args.folder);
+            match _c {
+                Ok(_) => {
+                },
+                Err(e) => {
+                    eprintln!("error: {:?}", e);
+                }
+            };
         }
     });
     prog.finish_with_message("[info]::kesa_aug: created augmentations!\n");
