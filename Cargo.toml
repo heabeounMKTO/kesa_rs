@@ -14,7 +14,7 @@ indicatif = "0.17.6"
 owo-colors = "3.5.0"
 serde = { version = "1.0.181", features = ["derive"] }
 serde_derive = "1.0.181"
-serde_json = "1.0.104"
+serde_json = "1.0.132"
 serde_yaml = "0.9.25"
 sorted-list = "0.2.0"
 ort = { version = "2.0.0-alpha.4", optional=true,features = ["tensorrt", "load-dynamic", "copy-dylibs", "download-binaries", "cuda"] }

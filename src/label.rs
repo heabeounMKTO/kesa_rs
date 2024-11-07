@@ -87,7 +87,7 @@ impl YoloBbox {
                 ],
                 group_id: Some(self.confidence.to_string()),
                 shape_type: String::from("rectangle"),
-                flags: HashMap::new(),
+                flags: Some(HashMap::new()),
             }),
             CoordinateType::Normalized => {
                 bail!("[error]::YoloBBox: please convert coordinate type to screen first ! (using YoloBBox::to_screen)")
@@ -239,7 +239,7 @@ impl OutputFormat for YoloAnnotation {
             points: vec![vec![self.xmin, self.ymin], vec![self.w, self.h]],
             group_id: Some(self.confidence.to_string()),
             shape_type: String::from("rectangle"),
-            flags: HashMap::new(),
+            flags: Some(HashMap::new()),
         }])
     }
     fn to_labelme(
@@ -362,7 +362,7 @@ pub struct Shape {
     pub points: Vec<Vec<f32>>,
     pub group_id: Option<String>,
     pub shape_type: String,
-    pub flags: HashMap<String, String>,
+    pub flags: Option<HashMap<String, String>>,
 }
 
 impl Shape {
@@ -448,7 +448,7 @@ impl OutputFormat for Embeddings {
                     points: xy_coords,
                     shape_type: shape.to_owned(),
                     group_id: Some(gid_idx.to_string()),
-                    flags: flags.to_owned(),
+                    flags: Some(flags.to_owned()),
                 };
                 shape_vec.push(_shape);
             }
